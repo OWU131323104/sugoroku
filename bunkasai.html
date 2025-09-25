@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>すごろくゲーム</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f8ff;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(10, 50px);
+      grid-auto-rows: 50px;
+      gap: 4px;
+      justify-content: center;
+      margin: 20px auto;
+    }
+    .cell {
+      border: 3px solid #555;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .cell.event { background: #fffbdb; }
+    .cell.back5 { background: #ffd1d1; }
+    .cell.tap { background: #c6f7d0; }
+    .cell.type { background: #d0e8ff; }
+    .player {
+      position: absolute;
+      font-size: 24px;
+    }
+    #dice {
+      font-size: 48px;
+      margin-top: 10px;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      background: #4caf50;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #moveBtn, #restartBtn {
+      display: none;
+    }
+    #eventBox {
+      background: rgba(255,255,255,0.95);
+      border: 2px solid #666;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 10px auto;
+      max-width: 320px;
+      display: none;
+    }
+    #typingModal {
+      display: none;
+      position: fixed;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -30%);
+      background: white;
+      padding: 20px;
+      border: 2px solid black;
+      z-index: 1000;
+      border-radius: 8px;
+    }
+    #typingModal p {
+      margin: 10px 0;
+    }
+    input {
+      padding: 6px;
+      font-size: 14px;
+      width: 80%;
+    }
+    #resultBox {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-top: 20px;
+      background: #fff8dc;
+      border: 2px solid #aaa;
+      border-radius: 8px;
+      padding: 12px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🎲 すごろくゲーム 🎲</h1>
+
+<div id="startMenu">
+  <p>プレイヤー人数を選んでください：</p>
+  <button onclick="startGame(1)">1人であそぶ</button>
+  <button onclick="startGame(2)">2人であそぶ</button>
+</div>
+
+<div id="gameUI" style="display:none;">
+  <div id="dice">🎲</div>
+  <button id="rollBtn">サイコロを振る</button>
+  <button id="moveBtn">進む</button>
+  <div id="board"></div>
+  <div id="eventBox"></div>
+  <button id="restartBtn">もう一度遊ぶ</button>
+  <div id="resultBox"></div>
+</div>
+
+<script>
+  const boardSize = 50;
+  const icons = ['🐱','🐶'];
+  const typingWords = ["ねこ","さくら","たこやき","まつり","すし","でんしゃ","すごろく","えんぴつ","はなび","おにぎり"];
+
+  let players, positions, currentPlayer, playerCount, cellTypes, turnCount, currentRoll;
+
+  const resultBox = document.getElementById('resultBox');
+
+  function getRandomEventCells() {
+    const types = ['back5','tap','type'];
+    const arr = Array(boardSize).fill('normal');
+    const used = new Set();
+
+    types.forEach(t => {
+      let p;
+      do { p = Math.floor(Math.random()*(boardSize-10)) + 1; } while(used.has(p));
+      used.add(p); arr[p] = t;
+    });
+
+    const total = Math.floor(Math.random()*4) + 7;
+    while(used.size < total) {
+      let p;
+      do { p = Math.floor(Math.random()*(boardSize-10)) + 1; } while(used.has(p));
+      used.add(p);
+      arr[p] = types[Math.floor(Math.random()*3)];
+    }
+    return arr;
+  }
+
+  function startGame(num) {
+    playerCount = num;
+    players = Array.from({length:num},(_,i)=>icons[i]);
+    positions = Array(num).fill(0);
+    currentPlayer = 0;
+    turnCount = 0;
+    cellTypes = getRandomEventCells();
+    resultBox.innerHTML = "";
+    resultBox.style.display = "none";
+
+    document.getElementById('startMenu').style.display='none';
+    document.getElementById('gameUI').style.display='block';
+    document.getElementById('moveBtn').style.display='none';
+    document.getElementById('restartBtn').style.display='none';
+    document.getElementById('rollBtn').style.display='inline-block';
+    document.getElementById('dice').textContent='🎲';
+    document.getElementById('board').innerHTML='';
+    document.getElementById('eventBox').style.display='none';
+    initBoard(); updateBoard();
+  }
+
+  function initBoard(){
+    const b = document.getElementById('board');
+    for(let i=0;i<boardSize;i++){
+      const c = document.createElement('div');
+      c.className = 'cell';
+      c.id = 'cell'+i;
+      if(cellTypes[i]!=='normal') c.classList.add('event', cellTypes[i]);
+      c.textContent = i;
+      b.appendChild(c);
+    }
+  }
+
+  function updateBoard(){
+    document.querySelectorAll('.cell').forEach(c=>c.innerHTML=c.id.replace('cell',''));
+    players.forEach((icon,i)=>{
+      const p = document.createElement('div');
+      p.className = 'player'; p.textContent = icon;
+      document.getElementById('cell'+positions[i]).appendChild(p);
+    });
+  }
+
+  document.getElementById('rollBtn').addEventListener('click',()=>{
+    currentRoll = Math.floor(Math.random()*6)+1;
+    document.getElementById('dice').textContent = `🎲 ${currentRoll}`;
+    document.getElementById('rollBtn').style.display='none';
+    document.getElementById('moveBtn').style.display='inline-block';
+  });
+
+  document.getElementById('moveBtn').addEventListener('click',()=>{
+    positions[currentPlayer] += currentRoll;
+    turnCount++;
+    document.getElementById('moveBtn').style.display='none';
+
+    if(positions[currentPlayer]>=boardSize-1){
+      positions[currentPlayer]=boardSize-1;
+      updateBoard();
+      resultBox.innerHTML = playerCount === 1
+        ? `🎉 クリア！${turnCount}ターンでゴールしました！`
+        : `🎉 プレイヤー ${players[currentPlayer]} の勝ち！`;
+        resultBox.style.display = "block";
+      document.getElementById('restartBtn').style.display='inline-block';
+      return;
+    }
+
+    updateBoard();
+    handleEvent(positions[currentPlayer]);
+  });
+
+  document.getElementById('restartBtn').addEventListener('click',()=>{
+    document.getElementById('startMenu').style.display='block';
+    document.getElementById('gameUI').style.display='none';
+  });
+
+  function nextTurn(){
+    currentPlayer = (currentPlayer+1)%playerCount;
+    document.getElementById('rollBtn').style.display='inline-block';
+  }
+
+  function showEventBox(html){
+    const eb = document.getElementById('eventBox');
+    eb.innerHTML = html; eb.style.display='block';
+  }
+
+  function closeEventBox(){
+    const eb = document.getElementById('eventBox');
+    eb.style.display='none'; eb.innerHTML='';
+  }
+
+  function handleEvent(pos) {
+    const t = cellTypes[pos];
+    if(t==='normal') { nextTurn(); return; }
+
+    if(t==='back5'){
+      showEventBox('⚠️ 5マス戻る！');
+      setTimeout(()=>{
+        positions[currentPlayer] = Math.max(0, positions[currentPlayer] - 5);
+        updateBoard(); closeEventBox(); nextTurn();
+      },800);
+    }
+    else if(t==='tap'){
+      let count=0, started=false;
+      showEventBox('🔥 「スタート」押して3秒連打！<br><button id="startTap">スタート</button>');
+      document.getElementById('startTap').addEventListener('click',()=>{
+        if(started) return;
+        started=true; count=0;
+        const btn = document.createElement('button');
+        btn.id='tapBtn'; btn.textContent='連打！';
+        document.getElementById('eventBox').appendChild(btn);
+        btn.addEventListener('click',()=>count++);
+        setTimeout(()=>{
+          btn.disabled=true;
+          document.getElementById('eventBox').innerHTML += `<br>${count}回`;
+          setTimeout(()=>{
+            if(count < 10){
+              positions[currentPlayer] = Math.max(0, positions[currentPlayer] - 3);
+              updateBoard();
+            }
+            closeEventBox(); nextTurn();
+          },1000);
+        },3000);
+      });
+    }
+    else if(t==='type'){
+      const target = typingWords[Math.floor(Math.random()*typingWords.length)];
+      let started=false, done=false, startTime=0;
+      showEventBox('⌨️ 「スタート」押してタイピング！<br><button id="startType">スタート</button>');
+      document.getElementById('startType').addEventListener('click',()=>{
+        if(started) return;
+        started=true; startTime = Date.now();
+        const html = `⌨️ ${target} を5秒以内に入力:<br>
+                      <input id="ti"><button id="tb">送信</button>`;
+        document.getElementById('eventBox').innerHTML = html;
+        document.getElementById('tb').addEventListener('click',()=>{
+          if(done) return;
+          done=true;
+          const elapsed = Date.now() - startTime;
+          const val = document.getElementById('ti').value.trim();
+          const ok = elapsed <=5000 && val === target;
+          document.getElementById('eventBox').innerHTML += ok ? '<br>✅成功！' : '<br>❌失敗！2マス戻る！';
+          if(!ok){
+            positions[currentPlayer] = Math.max(0, positions[currentPlayer] - 2);
+            updateBoard();
+          }
+          setTimeout(()=>{ closeEventBox(); nextTurn(); },1000);
+        });
+        setTimeout(()=>{
+          if(done) return;
+          done=true;
+          document.getElementById('eventBox').innerHTML += '<br>⏱時間切れ！2マス戻る！';
+          positions[currentPlayer] = Math.max(0, positions[currentPlayer] - 2);
+          updateBoard();
+          setTimeout(()=>{ closeEventBox(); nextTurn(); },1000);
+        },5000);
+      });
+    }
+  }
+</script>
+</body>
+</html>
