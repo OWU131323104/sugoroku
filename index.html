@@ -71,6 +71,49 @@ body {
 
 #timer { margin-top: 10px; font-size: 18px; color: #00796b; }
 #ranking { margin-top: 20px; font-size: 20px; }
+
+/* ===== スマホ操作用UI ===== */
+#controls {
+  position: fixed;
+  bottom: 10px;
+  width: 100%;
+  z-index: 6000;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none; /* UI以外クリック可能にする */
+}
+
+#fireBtn {
+  pointer-events: auto;
+  background: #ff7043;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  font-size: 18px;
+  margin-left: 20px;
+}
+
+#moveBtns {
+  pointer-events: auto;
+  margin-right: 20px;
+  display: grid;
+  grid-template-columns: 60px 60px 60px;
+  grid-template-rows: 60px 60px 60px;
+  gap: 5px;
+}
+#moveBtns button {
+  background: #00796b;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+}
+#up { grid-column: 2; grid-row: 1; }
+#left { grid-column: 1; grid-row: 2; }
+#down { grid-column: 2; grid-row: 2; }
+#right { grid-column: 3; grid-row: 2; }
   </style>
 </head>
 <body>
@@ -98,6 +141,17 @@ body {
   <button id="retry">再挑戦</button>
 </div>
 
+<!-- ===== スマホ用UI ===== -->
+<div id="controls">
+  <button id="fireBtn">発射</button>
+  <div id="moveBtns">
+    <button id="up">↑</button>
+    <button id="left">←</button>
+    <button id="down">↓</button>
+    <button id="right">→</button>
+  </div>
+</div>
+
 <script>
 let score = 0;
 let hp = 1000;
@@ -120,7 +174,6 @@ function startGame() {
   $("#count").text(score);
   $("#number").text(hp);
 
-  // 猫を中央に配置
   let windowWidth = $(window).width();
   let windowHeight = $(window).height();
   let catWidth = $("#cat").width();
@@ -134,7 +187,6 @@ function startGame() {
     if (fallDuration > 1000) fallDuration -= 300;
   }, 8000);
 
-  // 30秒カウントダウン
   let remaining = timeLimit;
   $("#timer").text("残り時間: " + remaining);
   timerInterval = setInterval(() => {
@@ -153,15 +205,11 @@ function endGame() {
   $("#cat").hide();
   $("#hud").hide();
 
-  // スコア保存
   let scores = JSON.parse(localStorage.getItem("catGameScores") || "[]");
   scores.push(score);
   localStorage.setItem("catGameScores", JSON.stringify(scores));
-
-  // ソートしてランキング作成
   scores.sort((a,b)=>b-a);
-  let rank = scores.indexOf(score) + 1; // 自分の順位
-
+  let rank = scores.indexOf(score) + 1;
   let topList = scores.slice(0,5).map((s,i)=>`${i+1}位: ${s}`).join("<br>");
 
   $("#finalScore").html(`ゲーム終了！<br>あなたのスコア: <strong>${score}</strong><br>あなたの順位: <strong>${rank}位</strong>`);
@@ -172,7 +220,6 @@ function endGame() {
 $("#startBtn").on("click", startGame);
 $("#retry").on("click", () => location.reload());
 
-// ネズミ生成
 function createMouse() {
   if (!gameStarted || isGameOver) return;
   const mouse = $("<div class='target'><img src='mouce.png'></div>");
@@ -187,7 +234,6 @@ function createMouse() {
 }
 setInterval(createMouse, 500);
 
-// 魚生成
 function createFish() {
   if (!gameStarted || isGameOver) return;
   const fish = $("<div class='fish'><img src='fish.png'></div>");
@@ -202,23 +248,57 @@ function createFish() {
 }
 setInterval(()=>{ if (Math.random()<0.1) createFish(); },1500);
 
-// 猫移動＆射撃
 $(document).keydown(function (e) {
   if (!gameStarted) return;
+  moveCat(e.keyCode);
+});
+
+function moveCat(keyCode){
   let cat = $("#cat");
   let position = cat.position();
   let catWidth = cat.width();
   let catHeight = cat.height();
   let windowWidth = $(window).width();
   let windowHeight = $(window).height();
-  switch (e.keyCode) {
+  switch (keyCode) {
     case 37: if (position.left > 0) cat.css("left", Math.max(0, position.left - moveStep)); break;
     case 38: if (position.top > 0) cat.css("top", Math.max(0, position.top - moveStep)); break;
     case 39: if (position.left + catWidth < windowWidth) cat.css("left", Math.min(windowWidth - catWidth, position.left + moveStep)); break;
     case 40: if (position.top + catHeight < windowHeight) cat.css("top", Math.min(windowHeight - catHeight, position.top + moveStep)); break;
-    case 32: e.preventDefault(); firePaw(); break;
+    case 32: firePaw(); break;
   }
-});
+}
+
+// ===== スマホボタン操作（長押し対応） =====
+function holdButton(selector, keyCode) {
+  let interval;
+  $(selector).on("mousedown touchstart", function(e){
+    e.preventDefault();
+    moveCat(keyCode);
+    interval = setInterval(()=>moveCat(keyCode), 100);
+  });
+  $(selector).on("mouseup mouseleave touchend", function(){
+    clearInterval(interval);
+  });
+}
+holdButton("#up", 38);
+holdButton("#down", 40);
+holdButton("#left", 37);
+holdButton("#right", 39);
+
+// 発射ボタン長押し（ゆっくり連射: 300ms間隔）
+function holdFireButton(selector) {
+  let interval;
+  $(selector).on("mousedown touchstart", function(e){
+    e.preventDefault();
+    if(gameStarted) firePaw();
+    interval = setInterval(()=>{ if(gameStarted) firePaw(); }, 300);
+  });
+  $(selector).on("mouseup mouseleave touchend", function(){
+    clearInterval(interval);
+  });
+}
+holdFireButton("#fireBtn");
 
 function firePaw() {
   if (isGameOver) return;
@@ -265,7 +345,6 @@ function isColliding(a,b){
   );
 }
 
-// HP減少
 function updateHP(dmg){
   if (isGameOver) return;
   hp -= dmg;
@@ -274,11 +353,8 @@ function updateHP(dmg){
   if (hp <= 0) endGame();
 }
 
-// 当たり判定（修正版：1匹につき1回だけ）
 setInterval(function(){
   if (!gameStarted || isGameOver) return;
-
-  // ネズミ
   $(".target").each(function(){
     if (!$(this).data("hit") && isColliding($("#cat"), $(this))) {
       $(this).data("hit", true);
@@ -288,8 +364,6 @@ setInterval(function(){
       $(this).stop().fadeOut(200,function(){ $(this).remove(); });
     }
   });
-
-  // 魚
   $(".fish").each(function(){
     if (!$(this).data("hit") && isColliding($("#cat"), $(this))) {
       $(this).data("hit", true);
