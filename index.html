@@ -1,312 +1,304 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>すごろくゲーム</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
   <style>
-    body {
-      font-family: sans-serif;
-      background: #f0f8ff;
-      text-align: center;
-      padding: 20px;
-    }
-    h1 {
-      font-size: 2em;
-      margin-bottom: 10px;
-    }
-    #board {
-      display: grid;
-      grid-template-columns: repeat(10, 50px);
-      grid-auto-rows: 50px;
-      gap: 4px;
-      justify-content: center;
-      margin: 20px auto;
-    }
-    .cell {
-      border: 3px solid #555;
-      border-radius: 8px;
-      background: #fff;
-      box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-    .cell.event { background: #fffbdb; }
-    .cell.back5 { background: #ffd1d1; }
-    .cell.tap { background: #c6f7d0; }
-    .cell.type { background: #d0e8ff; }
-    .player {
-      position: absolute;
-      font-size: 24px;
-    }
-    #dice {
-      font-size: 48px;
-      margin-top: 10px;
-    }
-    button {
-      margin: 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-      border: none;
-      background: #4caf50;
-      color: white;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    #moveBtn, #restartBtn {
-      display: none;
-    }
-    #eventBox {
-      background: rgba(255,255,255,0.95);
-      border: 2px solid #666;
-      border-radius: 8px;
-      padding: 20px;
-      margin: 10px auto;
-      max-width: 320px;
-      display: none;
-    }
-    #typingModal {
-      display: none;
-      position: fixed;
-      top: 30%;
-      left: 50%;
-      transform: translate(-50%, -30%);
-      background: white;
-      padding: 20px;
-      border: 2px solid black;
-      z-index: 1000;
-      border-radius: 8px;
-    }
-    #typingModal p {
-      margin: 10px 0;
-    }
-    input {
-      padding: 6px;
-      font-size: 14px;
-      width: 80%;
-    }
-    #resultBox {
-      font-size: 1.2em;
-      font-weight: bold;
-      margin-top: 20px;
-      background: #fff8dc;
-      border: 2px solid #aaa;
-      border-radius: 8px;
-      padding: 12px;
-      display: none;
-    }
+body {
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  background-color: #e0f7fa;
+  overflow: hidden;
+}
+
+#startScreen {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-color: #ffffff;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+}
+
+#startScreen h1 { font-size: 40px; margin-bottom: 20px; color: #00796b; }
+#startScreen p { font-size: 20px; margin: 10px 0; color: #555; }
+#startBtn {
+  margin-top: 30px; font-size: 24px; padding: 12px 30px;
+  background-color: #00796b; color: white; border: none;
+  border-radius: 8px; cursor: pointer; transition: background-color 0.3s;
+}
+#startBtn:hover { background-color: #004d40; }
+
+#cat { position: absolute; display: none; }
+#cat img { width: 80px; }
+
+.paw { position: absolute; z-index: 1000; }
+.paw img { width: 30px; }
+
+.target {
+  position: absolute; top: 0px;
+  width: 100px; height: 50px; text-align: center; line-height: 50px;
+}
+.target img { width: 60px; }
+
+.fish img { width: 60px; }
+
+#gameover {
+  display: none; position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85);
+  color: white; font-size: 28px; text-align: center; padding-top: 60px;
+  z-index: 9999;
+}
+#retry {
+  margin-top: 20px; padding: 10px 20px; font-size: 24px;
+  cursor: pointer; background-color: #ffffff; color: #00796b;
+  border: none; border-radius: 6px;
+}
+
+#hud {
+  display: none; position: fixed; top: 20px; right: 20px;
+  background-color: white; padding: 16px 24px; border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  z-index: 5000; font-size: 20px; color: #333; font-weight: bold;
+}
+#hud span { color: #00796b; font-size: 22px; }
+
+#timer { margin-top: 10px; font-size: 18px; color: #00796b; }
+#ranking { margin-top: 20px; font-size: 20px; }
   </style>
 </head>
 <body>
 
-<h1>🎲 すごろくゲーム 🎲</h1>
-
-<div id="startMenu">
-  <p>プレイヤー人数を選んでください：</p>
-  <button onclick="startGame(1)">1人であそぶ</button>
-  <button onclick="startGame(2)">2人であそぶ</button>
+<div id="startScreen">
+  <h1>ネコのシューティングゲーム</h1>
+  <p>30秒以内にスコアを稼ごう！</p>
+  <p>ネズミを倒すと +100点、ネズミに当たると HP -100</p>
+  <p>魚を取ると HP +50</p>
+  <p>←↑→↓で移動、スペースで肉球発射</p>
+  <button id="startBtn">ゲームスタート</button>
 </div>
 
-<div id="gameUI" style="display:none;">
-  <div id="dice">🎲</div>
-  <button id="rollBtn">サイコロを振る</button>
-  <button id="moveBtn">進む</button>
-  <div id="board"></div>
-  <div id="eventBox"></div>
-  <button id="restartBtn">もう一度遊ぶ</button>
-  <div id="resultBox"></div>
+<div id="hud">
+  HP: <span id="number">1000</span><br>
+  得点: <span id="count">0</span>
+  <div id="timer">残り時間: 30</div>
+</div>
+
+<div id="cat"><img src="cat.png"></div>
+
+<div id="gameover">
+  <div id="finalScore"></div>
+  <div id="ranking"></div>
+  <button id="retry">再挑戦</button>
 </div>
 
 <script>
-  const boardSize = 50;
-  const icons = ['🐱','🐶'];
-  const typingWords = ["ねこ","さくら","たこやき","まつり","すし","でんしゃ","すごろく","えんぴつ","はなび","おにぎり"];
+let score = 0;
+let hp = 1000;
+let fallDuration = 4000;
+let difficultyTimer;
+let moveStep = 20;
+let isGameOver = false;
+let gameStarted = false;
+let timeLimit = 30;   // 秒
+let timerInterval;
 
-  let players, positions, currentPlayer, playerCount, cellTypes, turnCount, currentRoll;
+function startGame() {
+  $("#startScreen").fadeOut(500);
+  $("#cat").show();
+  $("#hud").show();
+  gameStarted = true;
+  isGameOver = false;
+  score = 0;
+  hp = 1000;
+  $("#count").text(score);
+  $("#number").text(hp);
 
-  const resultBox = document.getElementById('resultBox');
+  // 猫を中央に配置
+  let windowWidth = $(window).width();
+  let windowHeight = $(window).height();
+  let catWidth = $("#cat").width();
+  let catHeight = $("#cat").height();
+  $("#cat").css({
+    left: (windowWidth - catWidth) / 2 + "px",
+    top: (windowHeight - catHeight) / 2 + "px"
+  });
 
-  function getRandomEventCells() {
-    const types = ['back5','tap','type'];
-    const arr = Array(boardSize).fill('normal');
-    const used = new Set();
+  difficultyTimer = setInterval(() => {
+    if (fallDuration > 1000) fallDuration -= 300;
+  }, 8000);
 
-    types.forEach(t => {
-      let p;
-      do { p = Math.floor(Math.random()*(boardSize-10)) + 1; } while(used.has(p));
-      used.add(p); arr[p] = t;
+  // 30秒カウントダウン
+  let remaining = timeLimit;
+  $("#timer").text("残り時間: " + remaining);
+  timerInterval = setInterval(() => {
+    remaining--;
+    $("#timer").text("残り時間: " + remaining);
+    if (remaining <= 0) endGame();
+  }, 1000);
+}
+
+function endGame() {
+  if (isGameOver) return;
+  isGameOver = true;
+  gameStarted = false;
+  clearInterval(difficultyTimer);
+  clearInterval(timerInterval);
+  $("#cat").hide();
+  $("#hud").hide();
+
+  // スコア保存
+  let scores = JSON.parse(localStorage.getItem("catGameScores") || "[]");
+  scores.push(score);
+  localStorage.setItem("catGameScores", JSON.stringify(scores));
+
+  // ソートしてランキング作成
+  scores.sort((a,b)=>b-a);
+  let rank = scores.indexOf(score) + 1; // 自分の順位
+
+  let topList = scores.slice(0,5).map((s,i)=>`${i+1}位: ${s}`).join("<br>");
+
+  $("#finalScore").html(`ゲーム終了！<br>あなたのスコア: <strong>${score}</strong><br>あなたの順位: <strong>${rank}位</strong>`);
+  $("#ranking").html("<br>🏆 ランキング 🏆<br>" + topList);
+  $("#gameover").fadeIn(500);
+}
+
+$("#startBtn").on("click", startGame);
+$("#retry").on("click", () => location.reload());
+
+// ネズミ生成
+function createMouse() {
+  if (!gameStarted || isGameOver) return;
+  const mouse = $("<div class='target'><img src='mouce.png'></div>");
+  const left = Math.random() * ($(window).width() - 100);
+  mouse.css({ left: left + "px", top: "0px" });
+  $("body").append(mouse);
+  mouse.animate({
+    top: ($(window).height() - 50) + "px"
+  }, fallDuration, function () {
+    $(this).fadeOut(500, function () { $(this).remove(); });
+  });
+}
+setInterval(createMouse, 500);
+
+// 魚生成
+function createFish() {
+  if (!gameStarted || isGameOver) return;
+  const fish = $("<div class='fish'><img src='fish.png'></div>");
+  const left = Math.random() * ($(window).width() - 100);
+  fish.css({ left: left + "px", top: "0px", position: "absolute" });
+  $("body").append(fish);
+  fish.animate({
+    top: ($(window).height() - 50) + "px"
+  }, fallDuration + 1000, function () {
+    $(this).fadeOut(500, function () { $(this).remove(); });
+  });
+}
+setInterval(()=>{ if (Math.random()<0.1) createFish(); },1500);
+
+// 猫移動＆射撃
+$(document).keydown(function (e) {
+  if (!gameStarted) return;
+  let cat = $("#cat");
+  let position = cat.position();
+  let catWidth = cat.width();
+  let catHeight = cat.height();
+  let windowWidth = $(window).width();
+  let windowHeight = $(window).height();
+  switch (e.keyCode) {
+    case 37: if (position.left > 0) cat.css("left", Math.max(0, position.left - moveStep)); break;
+    case 38: if (position.top > 0) cat.css("top", Math.max(0, position.top - moveStep)); break;
+    case 39: if (position.left + catWidth < windowWidth) cat.css("left", Math.min(windowWidth - catWidth, position.left + moveStep)); break;
+    case 40: if (position.top + catHeight < windowHeight) cat.css("top", Math.min(windowHeight - catHeight, position.top + moveStep)); break;
+    case 32: e.preventDefault(); firePaw(); break;
+  }
+});
+
+function firePaw() {
+  if (isGameOver) return;
+  const cat = $("#cat");
+  const catOffset = cat.offset();
+  const catCenterX = catOffset.left + cat.width() / 2;
+  const paw = $("<div class='paw'><img src='hand.png'></div>");
+  paw.css({ left: catCenterX - 15 + "px", top: catOffset.top - 20 + "px" });
+  $("body").append(paw);
+
+  function movePaw() {
+    if (isGameOver) { paw.remove(); return; }
+    let pawTop = paw.position().top;
+    paw.css("top", pawTop - 10 + "px");
+    $(".target").each(function () {
+      if (isColliding(paw, $(this))) {
+        $(this).stop().fadeOut(200, function () { $(this).remove(); });
+        paw.remove();
+        score += 100;
+        $("#count").html(score);
+      }
     });
-
-    const total = Math.floor(Math.random()*4) + 7;
-    while(used.size < total) {
-      let p;
-      do { p = Math.floor(Math.random()*(boardSize-10)) + 1; } while(used.has(p));
-      used.add(p);
-      arr[p] = types[Math.floor(Math.random()*3)];
-    }
-    return arr;
-  }
-
-  function startGame(num) {
-    playerCount = num;
-    players = Array.from({length:num},(_,i)=>icons[i]);
-    positions = Array(num).fill(0);
-    currentPlayer = 0;
-    turnCount = 0;
-    cellTypes = getRandomEventCells();
-    resultBox.innerHTML = "";
-    resultBox.style.display = "none";
-
-    document.getElementById('startMenu').style.display='none';
-    document.getElementById('gameUI').style.display='block';
-    document.getElementById('moveBtn').style.display='none';
-    document.getElementById('restartBtn').style.display='none';
-    document.getElementById('rollBtn').style.display='inline-block';
-    document.getElementById('dice').textContent='🎲';
-    document.getElementById('board').innerHTML='';
-    document.getElementById('eventBox').style.display='none';
-    initBoard(); updateBoard();
-  }
-
-  function initBoard(){
-    const b = document.getElementById('board');
-    for(let i=0;i<boardSize;i++){
-      const c = document.createElement('div');
-      c.className = 'cell';
-      c.id = 'cell'+i;
-      if(cellTypes[i]!=='normal') c.classList.add('event', cellTypes[i]);
-      c.textContent = i;
-      b.appendChild(c);
-    }
-  }
-
-  function updateBoard(){
-    document.querySelectorAll('.cell').forEach(c=>c.innerHTML=c.id.replace('cell',''));
-    players.forEach((icon,i)=>{
-      const p = document.createElement('div');
-      p.className = 'player'; p.textContent = icon;
-      document.getElementById('cell'+positions[i]).appendChild(p);
+    $(".fish").each(function () {
+      if (isColliding(paw, $(this))) {
+        $(this).stop().fadeOut(200, function () { $(this).remove(); });
+        paw.remove();
+        hp = Math.min(1000, hp + 50);
+        $("#number").text(hp);
+      }
     });
+    if (paw.position().top < -30) { paw.remove(); return; }
+    requestAnimationFrame(movePaw);
   }
+  movePaw();
+}
 
-  document.getElementById('rollBtn').addEventListener('click',()=>{
-    currentRoll = Math.floor(Math.random()*6)+1;
-    document.getElementById('dice').textContent = `🎲 ${currentRoll}`;
-    document.getElementById('rollBtn').style.display='none';
-    document.getElementById('moveBtn').style.display='inline-block';
+function isColliding(a,b){
+  let aOffset=a.offset(), bOffset=b.offset();
+  return !(
+    aOffset.top + a.height() < bOffset.top ||
+    aOffset.top > bOffset.top + b.height() ||
+    aOffset.left + a.width() < bOffset.left ||
+    aOffset.left > bOffset.left + b.width()
+  );
+}
+
+// HP減少
+function updateHP(dmg){
+  if (isGameOver) return;
+  hp -= dmg;
+  if (hp < 0) hp = 0;
+  $("#number").text(hp);
+  if (hp <= 0) endGame();
+}
+
+// 当たり判定（修正版：1匹につき1回だけ）
+setInterval(function(){
+  if (!gameStarted || isGameOver) return;
+
+  // ネズミ
+  $(".target").each(function(){
+    if (!$(this).data("hit") && isColliding($("#cat"), $(this))) {
+      $(this).data("hit", true);
+      $("#cat img").attr("src","odoroki.png");
+      setTimeout(()=>$("#cat img").attr("src","cat.png"),500);
+      updateHP(100);
+      $(this).stop().fadeOut(200,function(){ $(this).remove(); });
+    }
   });
 
-  document.getElementById('moveBtn').addEventListener('click',()=>{
-    positions[currentPlayer] += currentRoll;
-    turnCount++;
-    document.getElementById('moveBtn').style.display='none';
-
-    if(positions[currentPlayer]>=boardSize-1){
-      positions[currentPlayer]=boardSize-1;
-      updateBoard();
-      resultBox.innerHTML = playerCount === 1
-        ? `🎉 クリア！${turnCount}ターンでゴールしました！`
-        : `🎉 プレイヤー ${players[currentPlayer]} の勝ち！`;
-        resultBox.style.display = "block";
-      document.getElementById('restartBtn').style.display='inline-block';
-      return;
+  // 魚
+  $(".fish").each(function(){
+    if (!$(this).data("hit") && isColliding($("#cat"), $(this))) {
+      $(this).data("hit", true);
+      hp = Math.min(1000, hp + 50);
+      $("#number").text(hp);
+      $(this).stop().fadeOut(200,function(){ $(this).remove(); });
     }
-
-    updateBoard();
-    handleEvent(positions[currentPlayer]);
   });
-
-  document.getElementById('restartBtn').addEventListener('click',()=>{
-    document.getElementById('startMenu').style.display='block';
-    document.getElementById('gameUI').style.display='none';
-  });
-
-  function nextTurn(){
-    currentPlayer = (currentPlayer+1)%playerCount;
-    document.getElementById('rollBtn').style.display='inline-block';
-  }
-
-  function showEventBox(html){
-    const eb = document.getElementById('eventBox');
-    eb.innerHTML = html; eb.style.display='block';
-  }
-
-  function closeEventBox(){
-    const eb = document.getElementById('eventBox');
-    eb.style.display='none'; eb.innerHTML='';
-  }
-
-  function handleEvent(pos) {
-    const t = cellTypes[pos];
-    if(t==='normal') { nextTurn(); return; }
-
-    if(t==='back5'){
-      showEventBox('⚠️ 5マス戻る！');
-      setTimeout(()=>{
-        positions[currentPlayer] = Math.max(0, positions[currentPlayer] - 5);
-        updateBoard(); closeEventBox(); nextTurn();
-      },800);
-    }
-    else if(t==='tap'){
-      let count=0, started=false;
-      showEventBox('🔥 「スタート」押して3秒連打！<br><button id="startTap">スタート</button>');
-      document.getElementById('startTap').addEventListener('click',()=>{
-        if(started) return;
-        started=true; count=0;
-        const btn = document.createElement('button');
-        btn.id='tapBtn'; btn.textContent='連打！';
-        document.getElementById('eventBox').appendChild(btn);
-        btn.addEventListener('click',()=>count++);
-        setTimeout(()=>{
-          btn.disabled=true;
-          document.getElementById('eventBox').innerHTML += `<br>${count}回`;
-          setTimeout(()=>{
-            if(count < 10){
-              positions[currentPlayer] = Math.max(0, positions[currentPlayer] - 3);
-              updateBoard();
-            }
-            closeEventBox(); nextTurn();
-          },1000);
-        },3000);
-      });
-    }
-    else if(t==='type'){
-      const target = typingWords[Math.floor(Math.random()*typingWords.length)];
-      let started=false, done=false, startTime=0;
-      showEventBox('⌨️ 「スタート」押してタイピング！<br><button id="startType">スタート</button>');
-      document.getElementById('startType').addEventListener('click',()=>{
-        if(started) return;
-        started=true; startTime = Date.now();
-        const html = `⌨️ ${target} を5秒以内に入力:<br>
-                      <input id="ti"><button id="tb">送信</button>`;
-        document.getElementById('eventBox').innerHTML = html;
-        document.getElementById('tb').addEventListener('click',()=>{
-          if(done) return;
-          done=true;
-          const elapsed = Date.now() - startTime;
-          const val = document.getElementById('ti').value.trim();
-          const ok = elapsed <=5000 && val === target;
-          document.getElementById('eventBox').innerHTML += ok ? '<br>✅成功！' : '<br>❌失敗！2マス戻る！';
-          if(!ok){
-            positions[currentPlayer] = Math.max(0, positions[currentPlayer] - 2);
-            updateBoard();
-          }
-          setTimeout(()=>{ closeEventBox(); nextTurn(); },1000);
-        });
-        setTimeout(()=>{
-          if(done) return;
-          done=true;
-          document.getElementById('eventBox').innerHTML += '<br>⏱時間切れ！2マス戻る！';
-          positions[currentPlayer] = Math.max(0, positions[currentPlayer] - 2);
-          updateBoard();
-          setTimeout(()=>{ closeEventBox(); nextTurn(); },1000);
-        },5000);
-      });
-    }
-  }
+},100);
 </script>
 </body>
 </html>
