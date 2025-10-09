@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
-  <style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+<style>
 body {
   margin: 0;
   font-family: 'Arial', sans-serif;
@@ -28,8 +28,9 @@ body {
 
 #startScreen h1 { font-size: 40px; margin-bottom: 20px; color: #00796b; }
 #startScreen p { font-size: 20px; margin: 10px 0; color: #555; }
+#startScreen input { font-size:18px; padding:6px 10px; margin-top:10px; border-radius:6px; border:1px solid #00796b; }
 #startBtn {
-  margin-top: 30px; font-size: 24px; padding: 12px 30px;
+  margin-top: 20px; font-size: 24px; padding: 12px 30px;
   background-color: #00796b; color: white; border: none;
   border-radius: 8px; cursor: pointer; transition: background-color 0.3s;
 }
@@ -41,7 +42,10 @@ body {
 .paw { position: absolute; z-index: 1000; }
 .paw img { width: 30px; }
 
-.target { position: absolute; top: 0px; width: 100px; height: 50px; text-align: center; line-height: 50px; }
+.target {
+  position: absolute; top: 0px;
+  width: 100px; height: 50px; text-align: center; line-height: 50px;
+}
 .target img { width: 60px; }
 
 .fish img { width: 60px; }
@@ -56,6 +60,10 @@ body {
   margin-top: 20px; padding: 10px 20px; font-size: 24px;
   cursor: pointer; background-color: #ffffff; color: #00796b;
   border: none; border-radius: 6px;
+}
+#resetRanking {
+  position:absolute; left:20px; bottom:80px; padding:10px 20px; font-size:16px;
+  background:#ff4444; color:white; border:none; border-radius:6px; cursor:pointer;
 }
 
 #hud {
@@ -111,13 +119,11 @@ body {
 #left { grid-column: 1; grid-row: 2; }
 #down { grid-column: 2; grid-row: 2; }
 #right { grid-column: 3; grid-row: 2; }
-  </style>
+</style>
 </head>
 <body>
 
-<!-- 🎵 BGMと効果音 -->
 <audio id="bgm" src="Flight_to_Hope.mp3" loop></audio>
-<audio id="catSound" src="猫の威嚇.mp3" preload="auto"></audio>
 
 <div id="startScreen">
   <h1>ネコのシューティングゲーム</h1>
@@ -125,6 +131,7 @@ body {
   <p>ネズミを倒すと +100点、ネズミに当たると HP -100</p>
   <p>魚を取ると HP +50</p>
   <p>←↑→↓で移動、スペースで肉球発射</p>
+  <input type="text" id="playerNameInput" placeholder="プレイヤー名">
   <button id="startBtn">ゲームスタート</button>
 </div>
 
@@ -140,6 +147,7 @@ body {
   <div id="finalScore"></div>
   <div id="ranking"></div>
   <button id="retry">再挑戦</button>
+  <button id="resetRanking">ランキングリセット</button>
 </div>
 
 <div id="controls">
@@ -153,233 +161,149 @@ body {
 </div>
 
 <script>
-let score = 0;
-let hp = 1000;
-let fallDuration = 4000;
-let difficultyTimer;
-let moveStep = 20;
-let isGameOver = false;
-let gameStarted = false;
-let timeLimit = 30;
-let timerInterval;
-
-// 🎵 BGM設定
+let score = 0, hp = 1000, fallDuration = 4000;
+let difficultyTimer, moveStep = 20;
+let isGameOver = false, gameStarted = false;
+let timeLimit = 30, timerInterval;
+let playerName = "";
+let resetRankingNext = false;
 const bgm = document.getElementById("bgm");
 bgm.volume = 0.5;
 
-function startGame() {
-  $("#startScreen").fadeOut(500);
-  $("#cat").show();
-  $("#hud").show();
-  gameStarted = true;
-  isGameOver = false;
-  score = 0;
-  hp = 1000;
-  $("#count").text(score);
-  $("#number").text(hp);
-
-  bgm.play().catch(e => console.log("BGM再生エラー:", e));
-
-  let windowWidth = $(window).width();
-  let windowHeight = $(window).height();
-  let catWidth = $("#cat").width();
-  let catHeight = $("#cat").height();
-  $("#cat").css({
-    left: (windowWidth - catWidth) / 2 + "px",
-    top: (windowHeight - catHeight) / 2 + "px"
-  });
-
-  difficultyTimer = setInterval(() => {
-    if (fallDuration > 1000) fallDuration -= 300;
-  }, 8000);
-
-  let remaining = timeLimit;
-  $("#timer").text("残り時間: " + remaining);
-  timerInterval = setInterval(() => {
-    remaining--;
-    $("#timer").text("残り時間: " + remaining);
-    if (remaining <= 0) endGame();
-  }, 1000);
-}
-
-function endGame() {
-  if (isGameOver) return;
-  isGameOver = true;
-  gameStarted = false;
-  clearInterval(difficultyTimer);
-  clearInterval(timerInterval);
-  $("#cat").hide();
-  $("#hud").hide();
-
-  let scores = JSON.parse(localStorage.getItem("catGameScores") || "[]");
-  scores.push(score);
-  localStorage.setItem("catGameScores", JSON.stringify(scores));
-  scores.sort((a,b)=>b-a);
-  let rank = scores.indexOf(score) + 1;
-  let topList = scores.slice(0,5).map((s,i)=>`${i+1}位: ${s}`).join("<br>");
-
-  $("#finalScore").html(`ゲーム終了！<br>あなたのスコア: <strong>${score}</strong><br>あなたの順位: <strong>${rank}位</strong>`);
-  $("#ranking").html("<br>🏆 ランキング 🏆<br>" + topList);
-  $("#gameover").fadeIn(500);
-}
-
+// スタートボタンクリック
 $("#startBtn").on("click", startGame);
 $("#retry").on("click", () => location.reload());
 
-function createMouse() {
-  if (!gameStarted || isGameOver) return;
-  const mouse = $("<div class='target'><img src='mouce.png'></div>");
-  const left = Math.random() * ($(window).width() - 100);
-  mouse.css({ left: left + "px", top: "0px" });
-  $("body").append(mouse);
-  mouse.animate({
-    top: ($(window).height() - 50) + "px"
-  }, fallDuration, function () {
-    $(this).fadeOut(500, function () { $(this).remove(); });
-  });
-}
-setInterval(createMouse, 500);
-
-function createFish() {
-  if (!gameStarted || isGameOver) return;
-  const fish = $("<div class='fish'><img src='fish.png'></div>");
-  const left = Math.random() * ($(window).width() - 100);
-  fish.css({ left: left + "px", top: "0px", position: "absolute" });
-  $("body").append(fish);
-  fish.animate({
-    top: ($(window).height() - 50) + "px"
-  }, fallDuration + 1000, function () {
-    $(this).fadeOut(500, function () { $(this).remove(); });
-  });
-}
-setInterval(()=>{ if (Math.random()<0.1) createFish(); },1500);
-
-$(document).keydown(function (e) {
-  if (!gameStarted) return;
-  moveCat(e.keyCode);
+// ランキングリセットボタン
+$("#resetRanking").on("click", () => {
+  if(confirm("本当にランキングをリセットしますか？")) {
+    localStorage.setItem("catGameScores", JSON.stringify([]));
+    resetRankingNext = true;
+    alert("ランキングがリセットされました。次回ゲーム開始時から新しいランキングになります。");
+  }
 });
 
-function moveCat(keyCode){
-  let cat = $("#cat");
-  let position = cat.position();
-  let catWidth = cat.width();
-  let catHeight = cat.height();
-  let windowWidth = $(window).width();
-  let windowHeight = $(window).height();
-  switch (keyCode) {
-    case 37: if (position.left > 0) cat.css("left", Math.max(0, position.left - moveStep)); break;
-    case 38: if (position.top > 0) cat.css("top", Math.max(0, position.top - moveStep)); break;
-    case 39: if (position.left + catWidth < windowWidth) cat.css("left", Math.min(windowWidth - catWidth, position.left + moveStep)); break;
-    case 40: if (position.top + catHeight < windowHeight) cat.css("top", Math.min(windowHeight - catHeight, position.top + moveStep)); break;
+function startGame() {
+  playerName = $("#playerNameInput").val().trim();
+  if(!playerName){ alert("プレイヤー名を入力してください！"); return; }
+
+  if(resetRankingNext){
+    localStorage.setItem("catGameScores", JSON.stringify([]));
+    resetRankingNext = false;
+  }
+
+  $("#startScreen").fadeOut(500);
+  $("#cat").show();
+  $("#hud").show();
+  gameStarted = true; isGameOver = false; score = 0; hp = 1000;
+  $("#count").text(score); $("#number").text(hp);
+  bgm.play().catch(e=>console.log("BGM再生エラー:", e));
+
+  let w = $(window).width(), h = $(window).height();
+  $("#cat").css({ left:(w-$("#cat").width())/2, top:(h-$("#cat").height())/2 });
+
+  difficultyTimer = setInterval(()=>{ if(fallDuration>1000) fallDuration-=300; },8000);
+
+  let remaining = timeLimit;
+  $("#timer").text("残り時間: "+remaining);
+  timerInterval = setInterval(()=>{ remaining--; $("#timer").text("残り時間: "+remaining); if(remaining<=0) endGame(); },1000);
+}
+
+function endGame() {
+  if(isGameOver) return;
+  isGameOver = true; gameStarted = false;
+  clearInterval(difficultyTimer); clearInterval(timerInterval);
+  $("#cat").hide(); $("#hud").hide();
+
+  let stored = JSON.parse(localStorage.getItem("catGameScores")||"[]");
+  stored.push({name:playerName, score:score});
+  stored.sort((a,b)=>b.score-a.score);
+  localStorage.setItem("catGameScores", JSON.stringify(stored));
+
+  let rank = stored.findIndex(i=>i.name===playerName && i.score===score)+1;
+  let topList = stored.slice(0,10).map((item,i)=>`${i+1}位: ${item.name} - ${item.score}`).join("<br>");
+
+  $("#finalScore").html(`ゲーム終了！<br><strong>${playerName}</strong>さんのスコア: <strong>${score}</strong><br>${playerName}さんの順位: <strong>${rank}位</strong>`);
+  $("#ranking").html("<br>🏆 ランキング 🏆<br>"+topList);
+  $("#gameover").fadeIn(500);
+}
+
+// ===== マウス、魚生成 =====
+function createMouse(){ if(!gameStarted || isGameOver) return;
+  const m=$("<div class='target'><img src='mouce.png'></div>");
+  m.css({ left:Math.random()*($(window).width()-100)+"px", top:"0px" });
+  $("body").append(m);
+  m.animate({ top:($(window).height()-50)+"px" }, fallDuration, ()=>{ m.remove(); });
+}
+setInterval(createMouse,500);
+
+function createFish(){ if(!gameStarted || isGameOver) return;
+  const f=$("<div class='fish'><img src='fish.png'></div>");
+  f.css({ left:Math.random()*($(window).width()-100)+"px", top:"0px", position:"absolute" });
+  $("body").append(f);
+  f.animate({ top:($(window).height()-50)+"px" }, fallDuration+1000, ()=>{ f.remove(); });
+}
+setInterval(()=>{ if(Math.random()<0.1) createFish(); },1500);
+
+// ===== 猫移動 =====
+$(document).keydown(e=>{ if(!gameStarted) return; moveCat(e.keyCode); });
+
+function moveCat(k){
+  let c=$("#cat"), pos=c.position(), w=c.width(), h=c.height(), ww=$(window).width(), wh=$(window).height();
+  switch(k){
+    case 37: if(pos.left>0) c.css("left",Math.max(0,pos.left-moveStep)); break;
+    case 38: if(pos.top>0) c.css("top",Math.max(0,pos.top-moveStep)); break;
+    case 39: if(pos.left+w<ww) c.css("left",Math.min(ww-w,pos.left+moveStep)); break;
+    case 40: if(pos.top+h<wh) c.css("top",Math.min(wh-h,pos.top+moveStep)); break;
     case 32: firePaw(); break;
   }
 }
 
-// ===== スマホ操作ボタン =====
-function holdButton(selector, keyCode) {
-  let interval;
-  $(selector).on("mousedown touchstart", function(e){
-    e.preventDefault();
-    moveCat(keyCode);
-    interval = setInterval(()=>moveCat(keyCode), 100);
-  });
-  $(selector).on("mouseup mouseleave touchend", function(){
-    clearInterval(interval);
-  });
-}
-holdButton("#up", 38);
-holdButton("#down", 40);
-holdButton("#left", 37);
-holdButton("#right", 39);
+// ===== スマホ操作 =====
+function holdButton(sel,k){ let intv; $(sel).on("mousedown touchstart",e=>{ e.preventDefault(); moveCat(k); intv=setInterval(()=>moveCat(k),100); }).on("mouseup mouseleave touchend",()=>clearInterval(intv)); }
+holdButton("#up",38); holdButton("#down",40); holdButton("#left",37); holdButton("#right",39);
 
-function holdFireButton(selector) {
-  let interval;
-  $(selector).on("mousedown touchstart", function(e){
-    e.preventDefault();
-    if(gameStarted) firePaw();
-    interval = setInterval(()=>{ if(gameStarted) firePaw(); }, 300);
-  });
-  $(selector).on("mouseup mouseleave touchend", function(){
-    clearInterval(interval);
-  });
-}
+function holdFireButton(sel){ let intv; $(sel).on("mousedown touchstart",e=>{ e.preventDefault(); if(gameStarted) firePaw(); intv=setInterval(()=>{ if(gameStarted) firePaw(); },300); }).on("mouseup mouseleave touchend",()=>clearInterval(intv)); }
 holdFireButton("#fireBtn");
 
-function firePaw() {
-  if (isGameOver) return;
-
-  // 🎵 攻撃音再生
-  const sound = document.getElementById("catSound");
-  sound.currentTime = 0;
-  sound.play();
-
-  const cat = $("#cat");
-  const catOffset = cat.offset();
-  const catCenterX = catOffset.left + cat.width() / 2;
-  const paw = $("<div class='paw'><img src='hand.png'></div>");
-  paw.css({ left: catCenterX - 15 + "px", top: catOffset.top - 20 + "px" });
+function firePaw(){
+  if(isGameOver) return;
+  const c=$("#cat"), offset=c.offset(), cx=offset.left+c.width()/2;
+  const paw=$("<div class='paw'><img src='hand.png'></div>");
+  paw.css({ left:cx-15+"px", top:offset.top-20+"px" });
   $("body").append(paw);
 
-  function movePaw() {
-    if (isGameOver) { paw.remove(); return; }
-    let pawTop = paw.position().top;
-    paw.css("top", pawTop - 10 + "px");
-    $(".target").each(function () {
-      if (isColliding(paw, $(this))) {
-        $(this).stop().fadeOut(200, function () { $(this).remove(); });
-        paw.remove();
-        score += 100;
-        $("#count").html(score);
-      }
-    });
-    $(".fish").each(function () {
-      if (isColliding(paw, $(this))) {
-        $(this).stop().fadeOut(200, function () { $(this).remove(); });
-        paw.remove();
-        hp = Math.min(1000, hp + 50);
-        $("#number").text(hp);
-      }
-    });
-    if (paw.position().top < -30) { paw.remove(); return; }
-    requestAnimationFrame(movePaw);
+  function moveP(){
+    if(isGameOver){ paw.remove(); return; }
+    let pt=paw.position().top; paw.css("top",pt-10+"px");
+    $(".target").each(function(){ if(isColliding(paw,$(this))){ $(this).remove(); paw.remove(); score+=100; $("#count").html(score); } });
+    $(".fish").each(function(){ if(isColliding(paw,$(this))){ $(this).remove(); paw.remove(); hp=Math.min(1000,hp+50); $("#number").text(hp); } });
+    if(paw.position().top<-30){ paw.remove(); return; }
+    requestAnimationFrame(moveP);
   }
-  movePaw();
+  moveP();
 }
 
 function isColliding(a,b){
-  let aOffset=a.offset(), bOffset=b.offset();
-  return !(
-    aOffset.top + a.height() < bOffset.top ||
-    aOffset.top > bOffset.top + b.height() ||
-    aOffset.left + a.width() < bOffset.left ||
-    aOffset.left > bOffset.left + b.width()
-  );
+  let ao=a.offset(), bo=b.offset();
+  return !(ao.top+a.height()<bo.top || ao.top>bo.top+b.height() || ao.left+a.width()<bo.left || ao.left>bo.left+b.width());
 }
 
-function updateHP(dmg){
-  if (isGameOver) return;
-  hp -= dmg;
-  if (hp < 0) hp = 0;
-  $("#number").text(hp);
-  if (hp <= 0) endGame();
-}
+function updateHP(dmg){ if(isGameOver) return; hp-=dmg; if(hp<0) hp=0; $("#number").text(hp); if(hp<=0) endGame(); }
 
-setInterval(function(){
-  if (!gameStarted || isGameOver) return;
+setInterval(()=>{
+  if(!gameStarted || isGameOver) return;
   $(".target").each(function(){
-    if (!$(this).data("hit") && isColliding($("#cat"), $(this))) {
-      $(this).data("hit", true);
-      $("#cat img").attr("src","odoroki.png");
+    if(!$(this).data("hit") && isColliding($("#cat"),$(this))){
+      $(this).data("hit",true); $("#cat img").attr("src","odoroki.png");
       setTimeout(()=>$("#cat img").attr("src","cat.png"),500);
       updateHP(100);
       $(this).stop().fadeOut(200,function(){ $(this).remove(); });
     }
   });
   $(".fish").each(function(){
-    if (!$(this).data("hit") && isColliding($("#cat"), $(this))) {
-      $(this).data("hit", true);
-      hp = Math.min(1000, hp + 50);
-      $("#number").text(hp);
+    if(!$(this).data("hit") && isColliding($("#cat"),$(this))){
+      $(this).data("hit",true); hp=Math.min(1000,hp+50); $("#number").text(hp);
       $(this).stop().fadeOut(200,function(){ $(this).remove(); });
     }
   });
