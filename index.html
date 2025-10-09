@@ -308,7 +308,7 @@ function firePaw(){
     const shootSound = document.getElementById("shootSound");
   shootSound.currentTime = 0; // 連続発射時に途中から再生されないように
   shootSound.play().catch(e=>console.log("効果音再生エラー:", e));
-  s
+
   const c=$("#cat"), offset=c.offset(), cx=offset.left+c.width()/2;
   const paw=$("<div class='paw'><img src='hand.png'></div>");
   paw.css({ left:cx-15+"px", top:offset.top-20+"px" });
