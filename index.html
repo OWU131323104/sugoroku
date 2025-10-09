@@ -118,6 +118,9 @@ body {
 </head>
 <body>
 
+<!-- ===== BGMの追加部分 ===== -->
+<audio id="bgm" src="Flight_to_Hope.mp3" loop></audio>
+
 <div id="startScreen">
   <h1>ネコのシューティングゲーム</h1>
   <p>30秒以内にスコアを稼ごう！</p>
@@ -163,6 +166,10 @@ let gameStarted = false;
 let timeLimit = 30;   // 秒
 let timerInterval;
 
+// ===== BGM制御 =====
+const bgm = document.getElementById("bgm");
+bgm.volume = 0.5; // 音量調整（0.0〜1.0）
+
 function startGame() {
   $("#startScreen").fadeOut(500);
   $("#cat").show();
@@ -173,6 +180,9 @@ function startGame() {
   hp = 1000;
   $("#count").text(score);
   $("#number").text(hp);
+
+  // BGM開始（初回クリックで許可される）
+  bgm.play().catch(e => console.log("BGM再生エラー:", e));
 
   let windowWidth = $(window).width();
   let windowHeight = $(window).height();
@@ -204,6 +214,8 @@ function endGame() {
   clearInterval(timerInterval);
   $("#cat").hide();
   $("#hud").hide();
+
+  // BGMは止めない（常に流れ続ける）
 
   let scores = JSON.parse(localStorage.getItem("catGameScores") || "[]");
   scores.push(score);
@@ -269,7 +281,7 @@ function moveCat(keyCode){
   }
 }
 
-// ===== スマホボタン操作（長押し対応） =====
+// ===== スマホボタン操作 =====
 function holdButton(selector, keyCode) {
   let interval;
   $(selector).on("mousedown touchstart", function(e){
@@ -286,7 +298,6 @@ holdButton("#down", 40);
 holdButton("#left", 37);
 holdButton("#right", 39);
 
-// 発射ボタン長押し（ゆっくり連射: 300ms間隔）
 function holdFireButton(selector) {
   let interval;
   $(selector).on("mousedown touchstart", function(e){
@@ -376,5 +387,3 @@ setInterval(function(){
 </script>
 </body>
 </html>
-
-
