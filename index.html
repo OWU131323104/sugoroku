@@ -36,16 +36,35 @@ body {
 }
 #startBtn:hover { background-color: #004d40; }
 
+/* --- アイコン選択 --- */
+.icon-select {
+  display: flex;
+  justify-content: center;
+  margin-top: 15px;
+  gap: 15px;
+}
+.icon-option {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: transform 0.2s, border 0.3s;
+}
+.icon-option:hover {
+  transform: scale(1.1);
+}
+.icon-option.selected {
+  border-color: #00796b;
+  transform: scale(1.15);
+}
+
 #cat { position: absolute; display: none; }
 #cat img { width: 80px; }
 
 .paw { position: absolute; z-index: 1000; }
 .paw img { width: 30px; }
 
-.target {
-  position: absolute; top: 0px;
-  width: 100px; height: 50px; text-align: center; line-height: 50px;
-}
+.target { position: absolute; top: 0px; width: 100px; height: 50px; text-align: center; line-height: 50px; }
 .target img { width: 60px; }
 
 .fish img { width: 60px; }
@@ -87,7 +106,6 @@ body {
   justify-content: space-between;
   pointer-events: none;
 }
-
 #fireBtn {
   pointer-events: auto;
   background: #ff7043;
@@ -99,7 +117,6 @@ body {
   font-size: 18px;
   margin-left: 20px;
 }
-
 #moveBtns {
   pointer-events: auto;
   margin-right: 20px;
@@ -124,6 +141,8 @@ body {
 <body>
 
 <audio id="bgm" src="Flight_to_Hope.mp3" loop></audio>
+<audio id="shootSound" src="猫の威嚇.mp3"></audio>
+
 
 <div id="startScreen">
   <h1>ネコのシューティングゲーム</h1>
@@ -132,6 +151,11 @@ body {
   <p>魚を取ると HP +50</p>
   <p>←↑→↓で移動、スペースで肉球発射</p>
   <input type="text" id="playerNameInput" placeholder="プレイヤー名">
+  <div class="icon-select">
+    <img src="icon1.png" class="icon-option" data-icon="icon1.png">
+    <img src="icon2.png" class="icon-option" data-icon="icon2.png">
+    <img src="icon3.png" class="icon-option" data-icon="icon3.png">
+  </div>
   <button id="startBtn">ゲームスタート</button>
 </div>
 
@@ -165,10 +189,17 @@ let score = 0, hp = 1000, fallDuration = 4000;
 let difficultyTimer, moveStep = 20;
 let isGameOver = false, gameStarted = false;
 let timeLimit = 30, timerInterval;
-let playerName = "";
+let playerName = "", playerIcon = "";
 let resetRankingNext = false;
 const bgm = document.getElementById("bgm");
 bgm.volume = 0.5;
+
+// --- アイコン選択 ---
+$(".icon-option").on("click", function(){
+  $(".icon-option").removeClass("selected");
+  $(this).addClass("selected");
+  playerIcon = $(this).data("icon");
+});
 
 // スタートボタンクリック
 $("#startBtn").on("click", startGame);
@@ -179,13 +210,14 @@ $("#resetRanking").on("click", () => {
   if(confirm("本当にランキングをリセットしますか？")) {
     localStorage.setItem("catGameScores", JSON.stringify([]));
     resetRankingNext = true;
-    alert("ランキングがリセットされました。次回ゲーム開始時から新しいランキングになります。");
+    alert("ランキングがリセットされました。");
   }
 });
 
 function startGame() {
   playerName = $("#playerNameInput").val().trim();
   if(!playerName){ alert("プレイヤー名を入力してください！"); return; }
+  if(!playerIcon){ alert("アイコンを選択してください！"); return; }
 
   if(resetRankingNext){
     localStorage.setItem("catGameScores", JSON.stringify([]));
@@ -216,12 +248,16 @@ function endGame() {
   $("#cat").hide(); $("#hud").hide();
 
   let stored = JSON.parse(localStorage.getItem("catGameScores")||"[]");
-  stored.push({name:playerName, score:score});
+  stored.push({name:playerName, score:score, icon:playerIcon});
   stored.sort((a,b)=>b.score-a.score);
   localStorage.setItem("catGameScores", JSON.stringify(stored));
 
   let rank = stored.findIndex(i=>i.name===playerName && i.score===score)+1;
-  let topList = stored.slice(0,10).map((item,i)=>`${i+1}位: ${item.name} - ${item.score}`).join("<br>");
+
+  // ランキング表示（アイコン付き）
+  let topList = stored.slice(0,10).map((item,i)=>
+    `${i+1}位: <img src="${item.icon}" style="width:30px; vertical-align:middle;"> ${item.name} - ${item.score}`
+  ).join("<br>");
 
   $("#finalScore").html(`ゲーム終了！<br><strong>${playerName}</strong>さんのスコア: <strong>${score}</strong><br>${playerName}さんの順位: <strong>${rank}位</strong>`);
   $("#ranking").html("<br>🏆 ランキング 🏆<br>"+topList);
@@ -268,6 +304,11 @@ holdFireButton("#fireBtn");
 
 function firePaw(){
   if(isGameOver) return;
+  
+    const shootSound = document.getElementById("shootSound");
+  shootSound.currentTime = 0; // 連続発射時に途中から再生されないように
+  shootSound.play().catch(e=>console.log("効果音再生エラー:", e));
+  s
   const c=$("#cat"), offset=c.offset(), cx=offset.left+c.width()/2;
   const paw=$("<div class='paw'><img src='hand.png'></div>");
   paw.css({ left:cx-15+"px", top:offset.top-20+"px" });
