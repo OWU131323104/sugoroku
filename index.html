@@ -185,12 +185,14 @@ body {
 </div>
 
 <script>
+
 let score = 0, hp = 1000, fallDuration = 4000;
 let difficultyTimer, moveStep = 20;
 let isGameOver = false, gameStarted = false;
 let timeLimit = 30, timerInterval;
 let playerName = "", playerIcon = "";
 let resetRankingNext = false;
+let catDirection = 'default'; 
 const bgm = document.getElementById("bgm");
 bgm.volume = 0.5;
 
@@ -233,6 +235,10 @@ function startGame() {
 
   let w = $(window).width(), h = $(window).height();
   $("#cat").css({ left:(w-$("#cat").width())/2, top:(h-$("#cat").height())/2 });
+
+  
+  catDirection = 'default'; 
+  $("#cat img").attr("src", "cat.png"); 
 
   difficultyTimer = setInterval(()=>{ if(fallDuration>1000) fallDuration-=300; },8000);
 
@@ -293,6 +299,42 @@ function moveCat(k){
     case 40: if(pos.top+h<wh) c.css("top",Math.min(wh-h,pos.top+moveStep)); break;
     case 32: firePaw(); break;
   }
+}
+
+function moveCat(k){
+    let c=$("#cat"), pos=c.position(), w=c.width(), h=c.height(), ww=$(window).width(), wh=$(window).height();
+    let $catImg = $("#cat img"); // 画像要素を取得
+    switch(k){
+        case 37: // 左
+        if(pos.left>0) c.css("left",Math.max(0,pos.left-moveStep));
+        if(catDirection !== 'left'){
+        catDirection = 'left';
+        $catImg.attr("src", "left_cat.png");
+        }
+        break;
+        case 38: // 上
+        if(pos.top>0) c.css("top",Math.max(0,pos.top-moveStep));
+        if(catDirection !== 'down'){
+         catDirection = 'down';
+         $catImg.attr("src", "down_cat.png");
+        }
+        break;
+        case 39: // 右
+        if(pos.left+w<ww) c.css("left",Math.min(ww-w,pos.left+moveStep));
+        if(catDirection !== 'right'){
+         catDirection = 'right';
+         $catImg.attr("src", "right_cat.png");
+        }
+        break;
+        case 40: // 下
+        if(pos.top+h<wh) c.css("top",Math.min(wh-h,pos.top+moveStep));
+        if(catDirection !== 'up'){
+         catDirection = 'up';
+         $catImg.attr("src", "up_cat.png");
+        }
+        break;
+        case 32: firePaw(); break;
+    }
 }
 
 // ===== スマホ操作 =====
