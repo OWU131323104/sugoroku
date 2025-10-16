@@ -355,7 +355,7 @@ function createFish(){ if(!gameStarted || isGameOver) return;
   $("body").append(f);
   f.animate({ top:($(window).height()-50)+"px" }, fallDuration+1000, ()=>{ f.remove(); });
 }
-setInterval(()=>{ if(Math.random()<0.1) createFish(); },1500);
+setInterval(()=>{ if(Math.random()<0.4) createFish(); },1500);
 
 // ===== 猫移動 =====
 $(document).keydown(e=>{ if(!gameStarted) return; moveCat(e.keyCode); });
@@ -464,4 +464,5 @@ setInterval(()=>{
 </script>
 </body>
 </html> 
+
 
