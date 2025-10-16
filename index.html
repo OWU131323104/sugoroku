@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
 <style>
 body {
@@ -10,8 +10,12 @@ body {
   font-family: 'Arial', sans-serif;
   background-color: #e0f7fa;
   overflow: hidden;
+  touch-action: none;
 }
 
+/* ==============================
+   スタート画面
+============================== */
 #startScreen {
   position: fixed;
   top: 0; left: 0;
@@ -24,15 +28,40 @@ body {
   align-items: center;
   text-align: center;
   padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
-#startScreen h1 { font-size: 40px; margin-bottom: 20px; color: #00796b; }
-#startScreen p { font-size: 20px; margin: 10px 0; color: #555; }
-#startScreen input { font-size:18px; padding:6px 10px; margin-top:10px; border-radius:6px; border:1px solid #00796b; }
+#startScreen h1 { 
+  font-size: 40px; 
+  margin-bottom: 15px; 
+  color: #00796b; 
+}
+#startScreen p { 
+  font-size: 18px; 
+  margin: 6px 0; 
+  color: #555; 
+}
+#startScreen input { 
+  font-size: 18px; 
+  padding: 8px 10px; 
+  margin-top: 10px; 
+  border-radius: 6px; 
+  border: 1px solid #00796b; 
+  width: 80%;
+  max-width: 300px;
+}
+
 #startBtn {
-  margin-top: 20px; font-size: 24px; padding: 12px 30px;
-  background-color: #00796b; color: white; border: none;
-  border-radius: 8px; cursor: pointer; transition: background-color 0.3s;
+  margin-top: 20px;
+  font-size: 22px;
+  padding: 10px 28px;
+  background-color: #00796b;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
 #startBtn:hover { background-color: #004d40; }
 
@@ -41,7 +70,8 @@ body {
   display: flex;
   justify-content: center;
   margin-top: 15px;
-  gap: 15px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 .icon-option {
   width: 60px; height: 60px;
@@ -50,17 +80,37 @@ body {
   cursor: pointer;
   transition: transform 0.2s, border 0.3s;
 }
-.icon-option:hover {
-  transform: scale(1.1);
+.icon-option:hover { transform: scale(1.1); }
+.icon-option.selected { border-color: #00796b; transform: scale(1.15); }
+
+/* ==============================
+   スマホ縦画面向け調整
+============================== */
+@media screen and (max-width: 768px) and (orientation: portrait) {
+  #startScreen h1 { font-size: 28px; }
+  #startScreen p { font-size: 16px; }
+  #startBtn { font-size: 18px; padding: 10px 24px; }
+  #startScreen {
+    padding: 10px;
+    justify-content: flex-start;
+    padding-top: 15vh;
+  }
 }
-.icon-option.selected {
-  border-color: #00796b;
-  transform: scale(1.15);
+
+/* ==============================
+   iPad横画面（横向き想定）
+============================== */
+@media screen and (min-width: 769px) and (orientation: landscape) {
+  #startScreen {
+    padding: 40px;
+    justify-content: center;
+  }
 }
 
 #cat { position: absolute; display: none; }
 #cat img { width: 80px; }
 
+/* 以下、あなたの既存CSSをそのまま */
 .paw { position: absolute; z-index: 1000; }
 .paw img { width: 30px; }
 
@@ -138,6 +188,7 @@ body {
 #right { grid-column: 3; grid-row: 2; }
 </style>
 </head>
+
 <body>
 
 <audio id="bgm" src="Flight_to_Hope.mp3" loop></audio>
@@ -149,7 +200,7 @@ body {
   <p>30秒以内にスコアを稼ごう！</p>
   <p>ネズミを倒すと +100点、ネズミに当たると HP -100</p>
   <p>魚を取ると HP +50</p>
-  <p>←↑→↓で移動、スペースで肉球発射</p>
+  <p>←↑→↓で移動、発射ボタンで肉球発射</p>
   <input type="text" id="playerNameInput" placeholder="プレイヤー名">
   <div class="icon-select">
     <img src="icon1.png" class="icon-option" data-icon="icon1.png">
@@ -185,6 +236,19 @@ body {
 </div>
 
 <script>
+
+// --- 画面向き制御 ---
+function lockOrientation() {
+  const ua = navigator.userAgent.toLowerCase();
+  if (/ipad|tablet/.test(ua)) {
+    // iPadは横向き
+    screen.orientation.lock("landscape").catch(()=>{});
+  } else if (/iphone|android/.test(ua)) {
+    // スマホは縦向き
+    screen.orientation.lock("portrait").catch(()=>{});
+  }
+}
+window.addEventListener("load", lockOrientation);
 
 let score = 0, hp = 1000, fallDuration = 4000;
 let difficultyTimer, moveStep = 20;
