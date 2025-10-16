@@ -281,6 +281,7 @@ $("#resetRanking").on("click", () => {
 });
 
 function startGame() {
+　document.documentElement.requestFullscreen();
   playerName = $("#playerNameInput").val().trim();
   if(!playerName){ alert("プレイヤー名を入力してください！"); return; }
   if(!playerIcon){ alert("アイコンを選択してください！"); return; }
