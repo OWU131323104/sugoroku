@@ -221,70 +221,77 @@
     }
 
     /* === スマホ操作ボタン === */
-    /* === スマホ操作ボタン === */
-#controls {
-  position: fixed;
-  bottom: 10px;
-  width: 100%;
-  z-index: 6000;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end; /* ← 高さ揃えのために調整済み */
-  pointer-events: none;
-  padding: 0 20px;
-}
+    #controls {
+      position: fixed;
+      bottom: 10px;
+      width: 100%;
+      z-index: 6000;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      /* ← ボタンの高さを揃える */
+      pointer-events: none;
+      padding: 0 10px;
+    }
 
-/* 発射ボタン（位置調整） */
-#fireBtn {
-  pointer-events: auto;
-  background: #ff8a80;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 80px;
-  height: 80px;
-  font-size: 18px;
-  margin-left: 20px;
-  margin-bottom: 20px; /* ← 高さを調整して左右ボタンと揃える */
-  box-shadow: 0 4px #fae3d9;
-}
+    #fireBtn {
+      pointer-events: auto;
+      background: #ff8a80;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 80px;
+      height: 80px;
+      font-size: 18px;
+      margin-left: 20px;
+      box-shadow: 0 4px #fae3d9;
+    }
 
-/* 矢印ボタンの配置 */
-#moveBtns button:nth-child(2) {
-  grid-column: 1;
-  grid-row: 2;
-}
+    /* 矢印ボタンの配置修正 */
+    #moveBtns {
+      pointer-events: auto;
+      display: grid;
+      grid-template-columns: 60px 60px 60px;
+      grid-template-rows: 60px 60px 60px;
+      gap: 5px;
+      margin-right: 20px;
+      align-self: flex-end;
+    }
 
-#moveBtns button:nth-child(4) {
-  grid-column: 3;
-  grid-row: 2;
-}
+    /* 矢印ボタンの配置（中央に十字配置） */
+    #moveBtns button:nth-child(2) {
+      grid-column: 1;
+      /* ↑ */
+      grid-row: 2;
+    }
 
-#moveBtns button:nth-child(1) {
-  grid-column: 2;
-  grid-row: 1;
-}
+    #moveBtns button:nth-child(4) {
+      grid-column: 3;
+      /* ↓ */
+      grid-row: 2;
+    }
 
-#moveBtns button:nth-child(3) {
-  grid-column: 2;
-  grid-row: 3;
-}
-    
-/* 上下キーはそのままの不透明 */
-#up,
-#down {
-  opacity: 1;
-}
+    #moveBtns button:nth-child(1) {
+      grid-column: 2;
+      /* ← */
+      grid-row: 1;
+    }
 
-/* 矢印ボタン共通デザイン */
-#moveBtns button {
-  background: #ffb6b9;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 18px;
-  box-shadow: 0 3px #fae3d9;
-}
+    #moveBtns button:nth-child(3) {
+      grid-column: 2;
+      /* → */
+      grid-row: 3;
+    }
+
+    /* ボタンの見た目は変えない */
+    #moveBtns button {
+      background: #ffb6b9;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      box-shadow: 0 3px #fae3d9;
+    }
 
     /* === アニメーション === */
     @keyframes fadeIn {
@@ -568,8 +575,5 @@
 </body>
 
 </html>
-
-
-
 
 
