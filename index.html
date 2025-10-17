@@ -41,26 +41,28 @@
       /* ← 固定ではなく絶対位置に */
     }
 
-    /* === スタート画面 === */
-    #startScreen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: #fffafc;
-      /* 柔らかい白 */
-      z-index: 10000;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      padding: 20px;
-      animation: fadeIn 1.2s ease-out;
-      max-width: 100%;
-      overflow-wrap: break-word;
-    }
+  /* === スタート画面 === */
+  #startScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto; /* ← 高さを自動調整に変更 */
+    min-height: 100vh; /* ← スマホで途切れないように */
+    background-color: #fffafc;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box; /* ← 余白を含めて高さ調整 */
+    animation: fadeIn 1.2s ease-out;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    overflow-y: auto; /* ← スマホでスクロール可能に */
+  }
 
     #startScreen h1 {
       font-family: 'Press Start 2P', 'DotGothic16', sans-serif;
@@ -405,7 +407,7 @@
       $("#startScreen").fadeOut(500);
       $("#cat").show();
       $("#hud").show();
-      gameStarted = true; isGameOver = false; score = 0; hp = 1000;
+      gameStarted = true; isGameOver = false; score = 0; hp =500;
       $("#count").text(score); $("#number").text(hp);
       bgm.play().catch(e => console.log("BGM再生エラー:", e));
 
@@ -573,4 +575,5 @@
 </body>
 
 </html>
+
 
