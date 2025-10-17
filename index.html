@@ -1,468 +1,573 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
-<style>
-body {
-  margin: 0;
-  font-family: 'Arial', sans-serif;
-  background-color: #e0f7fa;
-  overflow: hidden;
-  touch-action: none;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
 
-/* ==============================
-   スタート画面
-============================== */
-#startScreen {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background-color: #ffffff;
-  z-index: 10000;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  padding: 20px;
-  box-sizing: border-box;
-  overflow-y: auto;
-}
 
-#startScreen h1 { 
-  font-size: 40px; 
-  margin-bottom: 15px; 
-  color: #00796b; 
-}
-#startScreen p { 
-  font-size: 18px; 
-  margin: 6px 0; 
-  color: #555; 
-}
-#startScreen input { 
-  font-size: 18px; 
-  padding: 8px 10px; 
-  margin-top: 10px; 
-  border-radius: 6px; 
-  border: 1px solid #00796b; 
-  width: 80%;
-  max-width: 300px;
-}
 
-#startBtn {
-  margin-top: 20px;
-  font-size: 22px;
-  padding: 10px 28px;
-  background-color: #00796b;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-#startBtn:hover { background-color: #004d40; }
 
-/* --- アイコン選択 --- */
-.icon-select {
-  display: flex;
-  justify-content: center;
-  margin-top: 15px;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+  <style>
+    /* ============================
+ 🐾 Cat Retro Game Style CSS
+============================ */
+    body {
+      margin: 0;
+      font-family: 'DotGothic16', sans-serif;
+      background-color: #f8f1f1;
+      color: #333;
+      overflow: hidden;
+      position: relative;
+    }
 
-.icon-option {
-  width: 60px; height: 60px;
-  border-radius: 50%;
-  border: 3px solid transparent;
-  cursor: pointer;
-  transition: transform 0.2s, border 0.3s;
-}
-.icon-option:hover { transform: scale(1.1); }
-.icon-option.selected { border-color: #00796b; transform: scale(1.15); }
 
-/* ==============================
-   スマホ縦画面向け調整
-============================== */
-@media screen and (max-width: 768px) and (orientation: portrait) {
-  #startScreen h1 { font-size: 28px; }
-  #startScreen p { font-size: 16px; }
-  #startBtn { font-size: 18px; padding: 10px 24px; }
-  #startScreen {
-    padding: 10px;
-    justify-content: flex-start;
-    padding-top: 15vh;
-  }
-}
+    /* ゲームエリア（キャラやオブジェクトが表示される範囲） */
+    #gameArea {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-/* ==============================
-   iPad横画面（横向き想定）
-============================== */
-@media screen and (min-width: 769px) and (orientation: landscape) {
-  #startScreen {
-    padding: 40px;
-    justify-content: center;
-  }
-}
+    /* 猫やターゲットなどのキャラ位置を復元 */
+    #cat,
+    .target,
+    .fish,
+    .paw {
+      position: absolute;
+      /* ← 固定ではなく絶対位置に */
+    }
 
-#cat { position: absolute; display: none; }
-#cat img { width: 80px; }
+    /* === スタート画面 === */
+    #startScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #fffafc;
+      /* 柔らかい白 */
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+      animation: fadeIn 1.2s ease-out;
+    }
 
-/* 以下、あなたの既存CSSをそのまま */
-.paw { position: absolute; z-index: 1000; }
-.paw img { width: 30px; }
+    #startScreen h1 {
+      font-family: 'Press Start 2P', 'DotGothic16', sans-serif;
+      font-size: 28px;
+      color: #ff8a80;
+      /* 優しいサーモンピンク */
+      margin-bottom: 20px;
+      text-shadow: 2px 2px #fae3d9;
+    }
 
-.target { position: absolute; top: 0px; width: 100px; height: 50px; text-align: center; line-height: 50px; }
-.target img { width: 60px; }
+    #startScreen p {
+      font-size: 18px;
+      color: #666;
+      margin: 6px 0;
+    }
 
-.fish img { width: 60px; }
+    #startScreen input {
+      font-family: 'DotGothic16', sans-serif;
+      font-size: 16px;
+      padding: 8px 12px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: 2px solid #ffb6b9;
+      background: #fff;
+    }
 
-#gameover {
-  display: none; position: fixed; top: 0; left: 0;
-  width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85);
-  color: white; font-size: 28px; text-align: center; padding-top: 60px;
-  z-index: 9999;
-}
-#retry {
-  margin-top: 20px; padding: 10px 20px; font-size: 24px;
-  cursor: pointer; background-color: #ffffff; color: #00796b;
-  border: none; border-radius: 6px;
-}
-#resetRanking {
-  position:absolute; left:20px; bottom:80px; padding:10px 20px; font-size:16px;
-  background:#ff4444; color:white; border:none; border-radius:6px; cursor:pointer;
-}
+    /* === ボタン（統一デザイン） === */
+    button {
+      font-family: 'DotGothic16', sans-serif;
+      background: #ffb6b9;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 24px;
+      font-size: 18px;
+      cursor: pointer;
+      box-shadow: 0 4px #fae3d9;
+      transition: transform 0.1s ease, background 0.3s ease;
+    }
 
-#hud {
-  display: none; position: fixed; top: 20px; right: 20px;
-  background-color: white; padding: 16px 24px; border-radius: 12px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
-  z-index: 5000; font-size: 20px; color: #333; font-weight: bold;
-}
-#hud span { color: #00796b; font-size: 22px; }
+    button:hover {
+      background: #fae3d9;
+      transform: scale(1.05);
+    }
 
-#timer { margin-top: 10px; font-size: 18px; color: #00796b; }
-#ranking { margin-top: 20px; font-size: 20px; }
+    #startBtn {
+      margin-top: 20px;
+      font-size: 22px;
+      background-color: #ffb6b9;
+    }
 
-/* ===== スマホ操作用UI ===== */
-#controls {
-  position: fixed;
-  bottom: 10px;
-  width: 100%;
-  z-index: 6000;
-  display: flex;
-  justify-content: space-between;
-  pointer-events: none;
-}
-#fireBtn {
-  pointer-events: auto;
-  background: #ff7043;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 80px;
-  height: 80px;
-  font-size: 18px;
-  margin-left: 20px;
-}
-#moveBtns {
-  pointer-events: auto;
-  margin-right: 20px;
-  display: grid;
-  grid-template-columns: 60px 60px 60px;
-  grid-template-rows: 60px 60px 60px;
-  gap: 5px;
-}
-#moveBtns button {
-  background: #00796b;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 18px;
-}
-#up { grid-column: 2; grid-row: 1; }
-#left { grid-column: 1; grid-row: 2; }
-#down { grid-column: 2; grid-row: 2; }
-#right { grid-column: 3; grid-row: 2; }
-</style>
+    /* === アイコン選択 === */
+    .icon-select {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .icon-option {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      background: #fff;
+      cursor: pointer;
+      transition: transform 0.2s, border 0.3s;
+    }
+
+    .icon-option:hover {
+      transform: scale(1.1);
+    }
+
+    .icon-option.selected {
+      border-color: #ff8a80;
+      box-shadow: 0 0 8px #ffb6b9;
+      transform: scale(1.15);
+    }
+
+    /* === ゲーム中の表示 === */
+    #hud {
+      display: none;
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 2px dashed #ffb6b9;
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+      z-index: 5000;
+      font-size: 18px;
+      color: #333;
+    }
+
+    #hud span {
+      color: #ff8a80;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    #timer {
+      margin-top: 10px;
+      font-size: 16px;
+      color: #ff8a80;
+    }
+
+    /* === ゲームオーバー画面 === */
+    #gameover {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(248, 241, 241, 0.95);
+      color: #333;
+      font-size: 22px;
+      text-align: center;
+      padding-top: 80px;
+      z-index: 9999;
+      animation: fadeIn 1s ease;
+    }
+
+    #finalScore {
+      color: #ff8a80;
+      font-weight: bold;
+    }
+
+    #ranking {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #555;
+    }
+
+    #resetRanking {
+      position: absolute;
+      left: 20px;
+      bottom: 80px;
+      background: #ff8a80;
+    }
+
+    /* === ゲームオブジェクト === */
+    #cat img {
+      width: 80px;
+    }
+
+    .paw img {
+      width: 30px;
+    }
+
+    .target img,
+    .fish img {
+      width: 60px;
+    }
+
+    /* === スマホ操作ボタン === */
+    #controls {
+      position: fixed;
+      bottom: 10px;
+      width: 100%;
+      z-index: 6000;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      /* ← ボタンの高さを揃える */
+      pointer-events: none;
+      padding: 0 10px;
+    }
+
+    #fireBtn {
+      pointer-events: auto;
+      background: #ff8a80;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 80px;
+      height: 80px;
+      font-size: 18px;
+      margin-left: 20px;
+      box-shadow: 0 4px #fae3d9;
+    }
+
+    /* 矢印ボタンの配置修正 */
+    #moveBtns {
+      pointer-events: auto;
+      display: grid;
+      grid-template-columns: 60px 60px 60px;
+      grid-template-rows: 60px 60px 60px;
+      gap: 5px;
+      margin-right: 20px;
+      align-self: flex-end;
+    }
+
+    /* 矢印ボタンの配置（中央に十字配置） */
+    #moveBtns button:nth-child(2) {
+      grid-column: 1;
+      /* ↑ */
+      grid-row: 2;
+    }
+
+    #moveBtns button:nth-child(4) {
+      grid-column: 3;
+      /* ↓ */
+      grid-row: 2;
+    }
+
+    #moveBtns button:nth-child(1) {
+      grid-column: 2;
+      /* ← */
+      grid-row: 1;
+    }
+
+    #moveBtns button:nth-child(3) {
+      grid-column: 2;
+      /* → */
+      grid-row: 3;
+    }
+
+    /* ボタンの見た目は変えない */
+    #moveBtns button {
+      background: #ffb6b9;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      box-shadow: 0 3px #fae3d9;
+    }
+
+    /* === アニメーション === */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<audio id="bgm" src="Flight_to_Hope.mp3" loop></audio>
-<audio id="shootSound" src="猫の威嚇.mp3"></audio>
+
+  <audio id="bgm" src="Flight_to_Hope.mp3" loop></audio>
+  <audio id="shootSound" src="猫の威嚇.mp3"></audio>
 
 
-<div id="startScreen">
-  <h1>ネコのシューティングゲーム</h1>
-  <p>30秒以内にスコアを稼ごう！</p>
-  <p>ネズミを倒すと +100点、ネズミに当たると HP -100</p>
-  <p>魚を取ると HP +50</p>
-  <p>←↑→↓で移動、発射ボタンで肉球発射</p>
-  <input type="text" id="playerNameInput" placeholder="プレイヤー名">
-  <div class="icon-select">
-    
-    <img src="icon1.png" class="icon-option" data-icon="icon1.png">
-    <img src="icon2.png" class="icon-option" data-icon="icon2.png">
-    <img src="icon3.png" class="icon-option" data-icon="icon3.png">
-    <img src="icon4.png" class="icon-option" data-icon="icon4.png">
-    <img src="icon5.png" class="icon-option" data-icon="icon5.png">
-    <img src="icon6.png" class="icon-option" data-icon="icon6.png">
-    
+  <div id="startScreen">
+    <h1>ネコのシューティングゲーム</h1>
+    <p>30秒以内にスコアを稼ごう！</p>
+    <p>ネズミを倒すと +100点、ネズミに当たると HP -100</p>
+    <p>魚を取ると HP +50</p>
+    <p>←↑→↓で移動、スペースで肉球発射</p>
+    <input type="text" id="playerNameInput" placeholder="プレイヤー名">
+    <div class="icon-select">
+
+      <img src="icon1.png" class="icon-option" data-icon="icon1.png">
+      <img src="icon2.png" class="icon-option" data-icon="icon2.png">
+      <img src="icon3.png" class="icon-option" data-icon="icon3.png">
+      <img src="icon4.png" class="icon-option" data-icon="icon4.png">
+      <img src="icon5.png" class="icon-option" data-icon="icon5.png">
+      <img src="icon6.png" class="icon-option" data-icon="icon6.png">
+
+    </div>
+    <button id="startBtn">ゲームスタート</button>
   </div>
-  <button id="startBtn">ゲームスタート</button>
-</div>
 
-<div id="hud">
-  HP: <span id="number">500</span><br>
-  得点: <span id="count">0</span>
-  <div id="timer">残り時間: 30</div>
-</div>
-
-<div id="cat"><img src="cat.png"></div>
-
-<div id="gameover">
-  <div id="finalScore"></div>
-  <div id="ranking"></div>
-  <button id="retry">再挑戦</button>
-  <button id="resetRanking">ランキングリセット</button>
-</div>
-
-<div id="controls">
-  <button id="fireBtn">発射</button>
-  <div id="moveBtns">
-    <button id="up">↑</button>
-    <button id="left">←</button>
-    <button id="down">↓</button>
-    <button id="right">→</button>
+  <div id="hud">
+    HP: <span id="number">1000</span><br>
+    得点: <span id="count">0</span>
+    <div id="timer">残り時間: 30</div>
   </div>
-</div>
 
-<script>
+  <div id="cat"><img src="cat.png"></div>
 
-// --- 画面向き制御 ---
-function lockOrientation() {
-  const ua = navigator.userAgent.toLowerCase();
-  if (/ipad|tablet/.test(ua)) {
-    // iPadは横向き
-    screen.orientation.lock("landscape").catch(()=>{});
-  } else if (/iphone|android/.test(ua)) {
-    // スマホは縦向き
-    screen.orientation.lock("portrait").catch(()=>{});
-  }
-}
-window.addEventListener("load", lockOrientation);
+  <div id="gameover">
+    <div id="finalScore"></div>
+    <div id="ranking"></div>
+    <button id="retry">再挑戦</button>
+    <button id="resetRanking">ランキングリセット</button>
+  </div>
 
-let score = 0, hp = 500, fallDuration = 4000;
-let difficultyTimer, moveStep = 20;
-let isGameOver = false, gameStarted = false;
-let timeLimit = 30, timerInterval;
-let playerName = "", playerIcon = "";
-let resetRankingNext = false;
-let catDirection = 'default'; 
-const bgm = document.getElementById("bgm");
-bgm.volume = 0.5;
+  <div id="controls">
+    <button id="fireBtn">発射</button>
+    <div id="moveBtns">
+      <button id="up">↑</button>
+      <button id="left">←</button>
+      <button id="down">↓</button>
+      <button id="right">→</button>
+    </div>
+  </div>
 
-// --- アイコン選択 ---
-$(".icon-option").on("click", function(){
-  $(".icon-option").removeClass("selected");
-  $(this).addClass("selected");
-  playerIcon = $(this).data("icon");
-});
 
-// スタートボタンクリック
-$("#startBtn").on("click", startGame);
-$("#retry").on("click", () => location.reload());
 
-// ランキングリセットボタン
-$("#resetRanking").on("click", () => {
-  if(confirm("本当にランキングをリセットしますか？")) {
-    localStorage.setItem("catGameScores", JSON.stringify([]));
-    resetRankingNext = true;
-    alert("ランキングがリセットされました。");
-  }
-});
+  <script>
 
-function startGame() {
-  playerName = $("#playerNameInput").val().trim();
-  if(!playerName){ alert("プレイヤー名を入力してください！"); return; }
-  if(!playerIcon){ alert("アイコンを選択してください！"); return; }
+    let score = 0, hp = 1000, fallDuration = 4000;
+    let difficultyTimer, moveStep = 20;
+    let isGameOver = false, gameStarted = false;
+    let timeLimit = 30, timerInterval;
+    let playerName = "", playerIcon = "";
+    let resetRankingNext = false;
+    let catDirection = 'default';
+    const bgm = document.getElementById("bgm");
+    bgm.volume = 0.5;
 
-  if(resetRankingNext){
-    localStorage.setItem("catGameScores", JSON.stringify([]));
-    resetRankingNext = false;
-  }
+    // --- アイコン選択 ---
+    $(".icon-option").on("click", function () {
+      $(".icon-option").removeClass("selected");
+      $(this).addClass("selected");
+      playerIcon = $(this).data("icon");
+    });
 
-  $("#startScreen").fadeOut(500);
-  $("#cat").show();
-  $("#hud").show();
-  gameStarted = true; isGameOver = false; score = 0; hp = 500;
-  $("#count").text(score); $("#number").text(hp);
-  bgm.play().catch(e=>console.log("BGM再生エラー:", e));
+    // スタートボタンクリック
+    $("#startBtn").on("click", startGame);
+    $("#retry").on("click", () => location.reload());
 
-  let w = $(window).width(), h = $(window).height();
-  $("#cat").css({ left:(w-$("#cat").width())/2, top:(h-$("#cat").height())/2 });
+    // ランキングリセットボタン
+    $("#resetRanking").on("click", () => {
+      if (confirm("本当にランキングをリセットしますか？")) {
+        localStorage.setItem("catGameScores", JSON.stringify([]));
+        resetRankingNext = true;
+        alert("ランキングがリセットされました。");
+      }
+    });
 
-  
-  catDirection = 'default'; 
-  $("#cat img").attr("src", "cat.png"); 
+    function startGame() {
+      playerName = $("#playerNameInput").val().trim();
+      if (!playerName) { alert("プレイヤー名を入力してください！"); return; }
+      if (!playerIcon) { alert("アイコンを選択してください！"); return; }
 
-  difficultyTimer = setInterval(()=>{ if(fallDuration>1000) fallDuration-=300; },8000);
+      if (resetRankingNext) {
+        localStorage.setItem("catGameScores", JSON.stringify([]));
+        resetRankingNext = false;
+      }
 
-  let remaining = timeLimit;
-  $("#timer").text("残り時間: "+remaining);
-  timerInterval = setInterval(()=>{ remaining--; $("#timer").text("残り時間: "+remaining); if(remaining<=0) endGame(); },1000);
-}
+      $("#startScreen").fadeOut(500);
+      $("#cat").show();
+      $("#hud").show();
+      gameStarted = true; isGameOver = false; score = 0; hp = 1000;
+      $("#count").text(score); $("#number").text(hp);
+      bgm.play().catch(e => console.log("BGM再生エラー:", e));
 
-function endGame() {
-  if(isGameOver) return;
-  isGameOver = true; gameStarted = false;
-  clearInterval(difficultyTimer); clearInterval(timerInterval);
-  $("#cat").hide(); $("#hud").hide();
+      let w = $(window).width(), h = $(window).height();
+      $("#cat").css({ left: (w - $("#cat").width()) / 2, top: (h - $("#cat").height()) / 2 });
 
-  let stored = JSON.parse(localStorage.getItem("catGameScores")||"[]");
-  stored.push({name:playerName, score:score, icon:playerIcon});
-  stored.sort((a,b)=>b.score-a.score);
-  localStorage.setItem("catGameScores", JSON.stringify(stored));
 
-  let rank = stored.findIndex(i=>i.name===playerName && i.score===score)+1;
+      catDirection = 'default';
+      $("#cat img").attr("src", "cat.png");
 
-  // ランキング表示（アイコン付き）
-  let topList = stored.slice(0,10).map((item,i)=>
-    `${i+1}位: <img src="${item.icon}" style="width:30px; vertical-align:middle;"> ${item.name} - ${item.score}`
-  ).join("<br>");
+      difficultyTimer = setInterval(() => { if (fallDuration > 1000) fallDuration -= 300; }, 8000);
 
-  $("#finalScore").html(`ゲーム終了！<br><strong>${playerName}</strong>さんのスコア: <strong>${score}</strong><br>${playerName}さんの順位: <strong>${rank}位</strong>`);
-  $("#ranking").html("<br>🏆 ランキング 🏆<br>"+topList);
-  $("#gameover").fadeIn(500);
-}
+      let remaining = timeLimit;
+      $("#timer").text("残り時間: " + remaining);
+      timerInterval = setInterval(() => { remaining--; $("#timer").text("残り時間: " + remaining); if (remaining <= 0) endGame(); }, 1000);
+    }
 
-// ===== マウス、魚生成 =====
-function createMouse(){ if(!gameStarted || isGameOver) return;
-  const m=$("<div class='target'><img src='mouce.png'></div>");
-  m.css({ left:Math.random()*($(window).width()-100)+"px", top:"0px" });
-  $("body").append(m);
-  m.animate({ top:($(window).height()-50)+"px" }, fallDuration, ()=>{ m.remove(); });
-}
-setInterval(createMouse,500);
+    function endGame() {
+      if (isGameOver) return;
+      isGameOver = true; gameStarted = false;
+      clearInterval(difficultyTimer); clearInterval(timerInterval);
+      $("#cat").hide(); $("#hud").hide();
 
-function createFish(){ if(!gameStarted || isGameOver) return;
-  const f=$("<div class='fish'><img src='fish.png'></div>");
-  f.css({ left:Math.random()*($(window).width()-100)+"px", top:"0px", position:"absolute" });
-  $("body").append(f);
-  f.animate({ top:($(window).height()-50)+"px" }, fallDuration+1000, ()=>{ f.remove(); });
-}
-setInterval(()=>{ if(Math.random()<0.4) createFish(); },1500);
+      let stored = JSON.parse(localStorage.getItem("catGameScores") || "[]");
+      stored.push({ name: playerName, score: score, icon: playerIcon });
+      stored.sort((a, b) => b.score - a.score);
+      localStorage.setItem("catGameScores", JSON.stringify(stored));
 
-// ===== 猫移動 =====
-$(document).keydown(e=>{ if(!gameStarted) return; moveCat(e.keyCode); });
+      let rank = stored.findIndex(i => i.name === playerName && i.score === score) + 1;
 
-function moveCat(k){
-  let c=$("#cat"), pos=c.position(), w=c.width(), h=c.height(), ww=$(window).width(), wh=$(window).height();
-  switch(k){
-    case 37: if(pos.left>0) c.css("left",Math.max(0,pos.left-moveStep)); break;
-    case 38: if(pos.top>0) c.css("top",Math.max(0,pos.top-moveStep)); break;
-    case 39: if(pos.left+w<ww) c.css("left",Math.min(ww-w,pos.left+moveStep)); break;
-    case 40: if(pos.top+h<wh) c.css("top",Math.min(wh-h,pos.top+moveStep)); break;
-    case 32: firePaw(); break;
-  }
-}
+      // ランキング表示（アイコン付き）
+      let topList = stored.slice(0, 10).map((item, i) =>
+        `${i + 1}位: <img src="${item.icon}" style="width:30px; vertical-align:middle;"> ${item.name} - ${item.score}`
+      ).join("<br>");
 
-function moveCat(k){
-    let c=$("#cat"), pos=c.position(), w=c.width(), h=c.height(), ww=$(window).width(), wh=$(window).height();
-    let $catImg = $("#cat img"); // 画像要素を取得
-    switch(k){
-        case 37: // 左
-        if(pos.left>0) c.css("left",Math.max(0,pos.left-moveStep));
-        if(catDirection !== 'left'){
-        catDirection = 'left';
-        $catImg.attr("src", "left_cat.png");
-        }
-        break;
-        case 38: // 上
-        if(pos.top>0) c.css("top",Math.max(0,pos.top-moveStep));
-        if(catDirection !== 'down'){
-         catDirection = 'down';
-         $catImg.attr("src", "down_cat.png");
-        }
-        break;
-        case 39: // 右
-        if(pos.left+w<ww) c.css("left",Math.min(ww-w,pos.left+moveStep));
-        if(catDirection !== 'right'){
-         catDirection = 'right';
-         $catImg.attr("src", "right_cat.png");
-        }
-        break;
-        case 40: // 下
-        if(pos.top+h<wh) c.css("top",Math.min(wh-h,pos.top+moveStep));
-        if(catDirection !== 'up'){
-         catDirection = 'up';
-         $catImg.attr("src", "up_cat.png");
-        }
-        break;
+      $("#finalScore").html(`ゲーム終了！<br><strong>${playerName}</strong>さんのスコア: <strong>${score}</strong><br>${playerName}さんの順位: <strong>${rank}位</strong>`);
+      $("#ranking").html("<br>🏆 ランキング 🏆<br>" + topList);
+      $("#gameover").fadeIn(500);
+    }
+
+    // ===== マウス、魚生成 =====
+    function createMouse() {
+      if (!gameStarted || isGameOver) return;
+      const m = $("<div class='target'><img src='mouce.png'></div>");
+      m.css({ left: Math.random() * ($(window).width() - 100) + "px", top: "0px" });
+      $("body").append(m);
+      m.animate({ top: ($(window).height() - 50) + "px" }, fallDuration, () => { m.remove(); });
+    }
+    setInterval(createMouse, 500);
+
+    function createFish() {
+      if (!gameStarted || isGameOver) return;
+      const f = $("<div class='fish'><img src='fish.png'></div>");
+      f.css({ left: Math.random() * ($(window).width() - 100) + "px", top: "0px", position: "absolute" });
+      $("body").append(f);
+      f.animate({ top: ($(window).height() - 50) + "px" }, fallDuration + 1000, () => { f.remove(); });
+    }
+    setInterval(() => { if (Math.random() < 0.1) createFish(); }, 1500);
+
+    // ===== 猫移動 =====
+    $(document).keydown(e => { if (!gameStarted) return; moveCat(e.keyCode); });
+
+    function moveCat(k) {
+      let c = $("#cat"), pos = c.position(), w = c.width(), h = c.height(), ww = $(window).width(), wh = $(window).height();
+      switch (k) {
+        case 37: if (pos.left > 0) c.css("left", Math.max(0, pos.left - moveStep)); break;
+        case 38: if (pos.top > 0) c.css("top", Math.max(0, pos.top - moveStep)); break;
+        case 39: if (pos.left + w < ww) c.css("left", Math.min(ww - w, pos.left + moveStep)); break;
+        case 40: if (pos.top + h < wh) c.css("top", Math.min(wh - h, pos.top + moveStep)); break;
         case 32: firePaw(); break;
+      }
     }
-}
 
-// ===== スマホ操作 =====
-function holdButton(sel,k){ let intv; $(sel).on("mousedown touchstart",e=>{ e.preventDefault(); moveCat(k); intv=setInterval(()=>moveCat(k),100); }).on("mouseup mouseleave touchend",()=>clearInterval(intv)); }
-holdButton("#up",38); holdButton("#down",40); holdButton("#left",37); holdButton("#right",39);
-
-function holdFireButton(sel){ let intv; $(sel).on("mousedown touchstart",e=>{ e.preventDefault(); if(gameStarted) firePaw(); intv=setInterval(()=>{ if(gameStarted) firePaw(); },300); }).on("mouseup mouseleave touchend",()=>clearInterval(intv)); }
-holdFireButton("#fireBtn");
-
-function firePaw(){
-  if(isGameOver) return;
-  
-    const shootSound = document.getElementById("shootSound");
-  shootSound.currentTime = 0; // 連続発射時に途中から再生されないように
-  shootSound.play().catch(e=>console.log("効果音再生エラー:", e));
-
-  const c=$("#cat"), offset=c.offset(), cx=offset.left+c.width()/2;
-  const paw=$("<div class='paw'><img src='hand.png'></div>");
-  paw.css({ left:cx-15+"px", top:offset.top-20+"px" });
-  $("body").append(paw);
-
-  function moveP(){
-    if(isGameOver){ paw.remove(); return; }
-    let pt=paw.position().top; paw.css("top",pt-10+"px");
-    $(".target").each(function(){ if(isColliding(paw,$(this))){ $(this).remove(); paw.remove(); score+=100; $("#count").html(score); } });
-    $(".fish").each(function(){ if(isColliding(paw,$(this))){ $(this).remove(); paw.remove(); hp=Math.min(1000,hp+50); $("#number").text(hp); } });
-    if(paw.position().top<-30){ paw.remove(); return; }
-    requestAnimationFrame(moveP);
-  }
-  moveP();
-}
-
-function isColliding(a,b){
-  let ao=a.offset(), bo=b.offset();
-  return !(ao.top+a.height()<bo.top || ao.top>bo.top+b.height() || ao.left+a.width()<bo.left || ao.left>bo.left+b.width());
-}
-
-function updateHP(dmg){ if(isGameOver) return; hp-=dmg; if(hp<0) hp=0; $("#number").text(hp); if(hp<=0) endGame(); }
-
-setInterval(()=>{
-  if(!gameStarted || isGameOver) return;
-  $(".target").each(function(){
-    if(!$(this).data("hit") && isColliding($("#cat"),$(this))){
-      $(this).data("hit",true); $("#cat img").attr("src","odoroki.png");
-      setTimeout(()=>$("#cat img").attr("src","cat.png"),500);
-      updateHP(100);
-      $(this).stop().fadeOut(200,function(){ $(this).remove(); });
+    function moveCat(k) {
+      let c = $("#cat"), pos = c.position(), w = c.width(), h = c.height(), ww = $(window).width(), wh = $(window).height();
+      let $catImg = $("#cat img"); // 画像要素を取得
+      switch (k) {
+        case 37: // 左
+          if (pos.left > 0) c.css("left", Math.max(0, pos.left - moveStep));
+          if (catDirection !== 'left') {
+            catDirection = 'left';
+            $catImg.attr("src", "left_cat.png");
+          }
+          break;
+        case 38: // 上
+          if (pos.top > 0) c.css("top", Math.max(0, pos.top - moveStep));
+          if (catDirection !== 'down') {
+            catDirection = 'down';
+            $catImg.attr("src", "down_cat.png");
+          }
+          break;
+        case 39: // 右
+          if (pos.left + w < ww) c.css("left", Math.min(ww - w, pos.left + moveStep));
+          if (catDirection !== 'right') {
+            catDirection = 'right';
+            $catImg.attr("src", "right_cat.png");
+          }
+          break;
+        case 40: // 下
+          if (pos.top + h < wh) c.css("top", Math.min(wh - h, pos.top + moveStep));
+          if (catDirection !== 'up') {
+            catDirection = 'up';
+            $catImg.attr("src", "up_cat.png");
+          }
+          break;
+        case 32: firePaw(); break;
+      }
     }
-  });
-  $(".fish").each(function(){
-    if(!$(this).data("hit") && isColliding($("#cat"),$(this))){
-      $(this).data("hit",true); hp=Math.min(1000,hp+50); $("#number").text(hp);
-      $(this).stop().fadeOut(200,function(){ $(this).remove(); });
+
+    // ===== スマホ操作 =====
+    function holdButton(sel, k) { let intv; $(sel).on("mousedown touchstart", e => { e.preventDefault(); moveCat(k); intv = setInterval(() => moveCat(k), 100); }).on("mouseup mouseleave touchend", () => clearInterval(intv)); }
+    holdButton("#up", 38); holdButton("#down", 40); holdButton("#left", 37); holdButton("#right", 39);
+
+    function holdFireButton(sel) { let intv; $(sel).on("mousedown touchstart", e => { e.preventDefault(); if (gameStarted) firePaw(); intv = setInterval(() => { if (gameStarted) firePaw(); }, 300); }).on("mouseup mouseleave touchend", () => clearInterval(intv)); }
+    holdFireButton("#fireBtn");
+
+    function firePaw() {
+      if (isGameOver) return;
+
+      const shootSound = document.getElementById("shootSound");
+      shootSound.currentTime = 0; // 連続発射時に途中から再生されないように
+      shootSound.play().catch(e => console.log("効果音再生エラー:", e));
+
+      const c = $("#cat"), offset = c.offset(), cx = offset.left + c.width() / 2;
+      const paw = $("<div class='paw'><img src='hand.png'></div>");
+      paw.css({ left: cx - 15 + "px", top: offset.top - 20 + "px" });
+      $("body").append(paw);
+
+      function moveP() {
+        if (isGameOver) { paw.remove(); return; }
+        let pt = paw.position().top; paw.css("top", pt - 10 + "px");
+        $(".target").each(function () { if (isColliding(paw, $(this))) { $(this).remove(); paw.remove(); score += 100; $("#count").html(score); } });
+        $(".fish").each(function () { if (isColliding(paw, $(this))) { $(this).remove(); paw.remove(); hp = Math.min(1000, hp + 50); $("#number").text(hp); } });
+        if (paw.position().top < -30) { paw.remove(); return; }
+        requestAnimationFrame(moveP);
+      }
+      moveP();
     }
-  });
-},100);
-</script>
+
+    function isColliding(a, b) {
+      let ao = a.offset(), bo = b.offset();
+      return !(ao.top + a.height() < bo.top || ao.top > bo.top + b.height() || ao.left + a.width() < bo.left || ao.left > bo.left + b.width());
+    }
+
+    function updateHP(dmg) { if (isGameOver) return; hp -= dmg; if (hp < 0) hp = 0; $("#number").text(hp); if (hp <= 0) endGame(); }
+
+    setInterval(() => {
+      if (!gameStarted || isGameOver) return;
+      $(".target").each(function () {
+        if (!$(this).data("hit") && isColliding($("#cat"), $(this))) {
+          $(this).data("hit", true); $("#cat img").attr("src", "odoroki.png");
+          setTimeout(() => $("#cat img").attr("src", "cat.png"), 500);
+          updateHP(100);
+          $(this).stop().fadeOut(200, function () { $(this).remove(); });
+        }
+      });
+      $(".fish").each(function () {
+        if (!$(this).data("hit") && isColliding($("#cat"), $(this))) {
+          $(this).data("hit", true); hp = Math.min(1000, hp + 50); $("#number").text(hp);
+          $(this).stop().fadeOut(200, function () { $(this).remove(); });
+        }
+      });
+    }, 100);
+  </script>
 </body>
-</html> 
 
-
+</html>
