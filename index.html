@@ -336,7 +336,7 @@
   </div>
 
   <div id="hud">
-    HP: <span id="number">500</span><br>
+    HP: <span id="number">800</span><br>
     得点: <span id="count">0</span>
     <div id="timer">残り時間: 30</div>
   </div>
@@ -364,7 +364,7 @@
 
   <script>
 
-    let score = 0, hp = 500, fallDuration = 4000;
+    let score = 0, hp = 800, fallDuration = 4000;
     let difficultyTimer, moveStep = 20;
     let isGameOver = false, gameStarted = false;
     let timeLimit = 30, timerInterval;
@@ -407,7 +407,7 @@
       $("#startScreen").fadeOut(500);
       $("#cat").show();
       $("#hud").show();
-      gameStarted = true; isGameOver = false; score = 0; hp =500;
+      gameStarted = true; isGameOver = false; score = 0; hp =800;
       $("#count").text(score); $("#number").text(hp);
       bgm.play().catch(e => console.log("BGM再生エラー:", e));
 
@@ -575,6 +575,7 @@
 </body>
 
 </html>
+
 
 
 
